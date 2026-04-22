@@ -4,7 +4,7 @@ __pycache__/
 *.pyc
 *.pyo
 .DS_Store
-exports/
+exports/*csv
 *.png
 .vscode/
 
