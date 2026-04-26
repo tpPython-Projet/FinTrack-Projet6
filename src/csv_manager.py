@@ -5,7 +5,7 @@ Bloc 4 : Persistance des données
 Description : Gestionnaire de la lecture et écriture des fichiers CSV
                 (transactions, budgets, config, journal)
 Auteurs: HOUSSOU Towanou Bliss Espérance / AMOUSSOU Firmin
-Date: --
+Date: 25/04/2026
 
 """
 import csv
@@ -173,6 +173,14 @@ def sauvegarder_config(nom,devise="FCFA", chemin=CONFIG_CSV):
             writer.writerow({"nom": nom, "devise":devise})
     except Exception as e : 
         print (f"Erreur sauvegarde confgig:{e} ")
+
+
+def sauvegarder_backup(chemin=TRANSACTIONS_CSV):
+    """Crée une copie de secours avant toute modification."""
+    import shutil
+    backup = chemin.replace(".csv", "_backup.csv")
+    if os.path.exists(chemin):
+        shutil.copy2(chemin, backup)
 
 # Test 
 

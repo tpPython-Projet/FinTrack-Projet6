@@ -58,7 +58,7 @@ class GestionnaireFinancier:
     def __init__(self):
         self._transactions=[]
         self._budgets=[]
-        self.prochain_id=1
+        self._prochain_id=1
         self._mots_cles = MOTS_CLES
 
     
@@ -112,14 +112,14 @@ class GestionnaireFinancier:
             categorie = self.categoriser(description)
         
         if float(montant) < 0:
-            t= Depense(self.prochain_id, description,
+            t= Depense(self._prochain_id, description,
                         montant, categorie, date)
         else:
-            t= Revenu(self.prochain_id, description,
+            t= Revenu(self._prochain_id, description,
                         montant, categorie, date)
         
         self._transactions.append(t)
-        self.prochain_id += 1
+        self._prochain_id += 1
         return t
     
     def supprimer_transaction(self, id):
@@ -146,7 +146,11 @@ class GestionnaireFinancier:
                 if description:
                     t._description = description
                 if montant is not None:
-                    t._montant = montant
+                    # On conserve le type (revenu/depense)
+                    if t.type_transaction() == "revenu":
+                        t._montant = abs(float(montant))
+                    else:
+                        t._montant = -abs(float(montant))
                 if categorie:
                     t._categorie = categorie
                 if date:
