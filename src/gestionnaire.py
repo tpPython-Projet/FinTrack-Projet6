@@ -9,6 +9,8 @@ Date : 22/04/2026
 """
 import sys
 import os
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.transaction import Transaction, Depense, Revenu
 from src.budget import Budget
@@ -56,12 +58,75 @@ class GestionnaireFinancier:
     les données et les fonctionnalités de l'application(l'interface utilisateur).
     """
     def __init__(self):
-        self._transactions=[]
-        self._budgets=[]
-        self._prochain_id=1
+        """
+        Initialise le gestionnaire et charge les données depuis les CSV.
+        """
+        from src.csv_manager import (
+            initialiser_csv, lire_transactions,
+            lire_budgets, ecrire_journal
+        )
+        self._transactions = []
+        self._budgets = []
+        self._prochain_id = 1
         self._mots_cles = MOTS_CLES
 
-    
+        # Initialiser les fichiers CSV s'ils n'existent pas
+        initialiser_csv(
+            os.path.join(BASE_DIR, "data", "transactions.csv"),
+            ["id", "date", "description", "montant", "categorie", "type"]
+        )
+        initialiser_csv(
+            os.path.join(BASE_DIR, "data", "budgets.csv"),
+            ["categorie", "plafond", "mois", "annee"]
+        )
+        initialiser_csv(
+            os.path.join(BASE_DIR, "data", "config.csv"),
+            ["nom", "devise"]
+        )
+        initialiser_csv(
+            os.path.join(BASE_DIR, "data", "journal.csv"),
+            ["horodatage", "action", "details"]
+        )
+
+        # Charger les données existantes
+        self._charger_transactions()
+        self._charger_budgets()
+
+        # Enregistrer le démarrage
+        ecrire_journal("DEMARRAGE", "Application FinTrack démarrée")
+
+    def _charger_transactions(self):
+        """
+        Charge les transactions depuis le fichier CSV au démarrage.
+        Reconstruit les objets Depense et Revenu depuis les données CSV.
+        """
+        from src.csv_manager import lire_transactions
+        donnees = lire_transactions()
+        for d in donnees:
+            if d["type"] == "depense":
+                t = Depense(d["id"], d["description"],
+                            d["montant"], d["categorie"], d["date"])
+            else:
+                t = Revenu(d["id"], d["description"],
+                        d["montant"], d["categorie"], d["date"])
+            self._transactions.append(t)
+            if d["id"] >= self._prochain_id:
+                self._prochain_id = d["id"] + 1
+
+
+    def _charger_budgets(self):
+        """
+        Charge les budgets depuis le fichier CSV au démarrage.
+        Reconstruit les objets Budget depuis les données CSV.
+        """
+        from src.csv_manager import lire_budgets
+        donnees = lire_budgets()
+        for d in donnees:
+            b = Budget(d["categorie"], d["plafond"],
+                    d["mois"], d["annee"])
+            self._budgets.append(b)
+
+        
     # Propriétés
 
     @property
@@ -105,9 +170,9 @@ class GestionnaireFinancier:
                             categorie=None, date=None):
         """
         Crée et ajoute une nouvelle transaction à la liste.
-        Si une catégorie n'est pas fournie, elle est déterminéee 
-        automatiquement par la méthode categoriser().
+        Sauvegarde automatiquement dans le CSV après ajout.
         """
+        from src.csv_manager import sauvegarder_transactions, ecrire_journal
         if categorie is None:
             categorie = self.categoriser(description)
         
@@ -120,17 +185,26 @@ class GestionnaireFinancier:
         
         self._transactions.append(t)
         self._prochain_id += 1
+        sauvegarder_transactions(self._transactions)
+        ecrire_journal("AJOUT",
+                       f"Transaction #{t.id} : "
+                       f"{t.montant} FCFA - {t.description}")
         return t
     
     def supprimer_transaction(self, id):
         """
         Supprime une transaction par son id.
-        Retourne True si la transaction a été trouvée et supprimée,
-         sinon False.
+        Sauvegarde automatiquement après suppression.
         """
+        from src.csv_manager import (sauvegarder_transactions, 
+                                     ecrire_journal, sauvegarder_backup)
         for i, t in enumerate(self._transactions):
             if t._id == id:
+                sauvegarder_backup()
                 self._transactions.pop(i)
+                sauvegarder_transactions(self._transactions)
+                ecrire_journal("SUPPRESSION", 
+                               f"Transaction #{id} supprimée !")
                 return True
         return False
     
@@ -138,11 +212,14 @@ class GestionnaireFinancier:
                               montant=None, categorie=None, date=None):
         """
         Modifie les champs d'une transaction existante.
-        Seuls les champs fournis sont modifiés.
+        Sauvegarde automatiquement après modification.
         """
 
+        from src.csv_manager import (sauvegarder_transactions, 
+                                     ecrire_journal, sauvegarder_backup)
         for t in self._transactions:
             if t._id == id:
+                sauvegarder_backup()
                 if description:
                     t._description = description
                 if montant is not None:
@@ -155,6 +232,9 @@ class GestionnaireFinancier:
                     t._categorie = categorie
                 if date:
                     t._date = date
+                sauvegarder_transactions(self._transactions)
+                ecrire_journal("MODIFICATION", 
+                               f"Transactin #{id} modifiée !")
                 return True
         return False
     
@@ -196,9 +276,16 @@ class GestionnaireFinancier:
     #Budgets
 
     def ajouter_budget(self, categorie, plafond, mois, annee):
-        """Crée et ajoute un nouveau budget mensuel à la liste."""
+        """
+        Crée et ajoute un nouveau budget mensuel à la liste.
+        Sauvegarde automatiquement dans le CSV.
+        """
+        from src.csv_manager import sauvegarder_budgets, ecrire_journal
         b= Budget(categorie, plafond, mois, annee)
         self._budgets.append(b)
+        sauvegarder_budgets(self._budgets)
+        ecrire_journal("BUDGET",
+                       f"Budget {categorie} défini : {plafond} FCFA")
         return b
     
     def verifier_budget(self, categorie, mois, annee):
