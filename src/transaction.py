@@ -53,7 +53,7 @@ class Transaction:
     # Setters 
 
     @description.setter
-    def description(self, value):
+    def description(self, valeur):
         """Modifie la description après vérification."""
         if not valeur.strip():
             raise ValueError("La description est vide.")

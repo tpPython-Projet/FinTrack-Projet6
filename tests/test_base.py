@@ -9,6 +9,7 @@
 
 import sys
 import os
+import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.transaction import Transaction, Depense, Revenu
@@ -104,6 +105,7 @@ def test_ajouter_transaction_revenu():
 
 def test_calculer_solde():
     g = GestionnaireFinancier()
+    g._transactions= []
     g.ajouter_transaction("Salaire", 75000, "Revenu")
     g.ajouter_transaction("Achat riz", -5500, "Alimentation")
     g.ajouter_transaction("Transport zem", -1500, "Transport")
@@ -111,10 +113,13 @@ def test_calculer_solde():
 
 def test_supprimer_transaction():
     g = GestionnaireFinancier()
+    g._transactions=[]
+    g._prochain_id=1
     g.ajouter_transaction("Salaire", 75000, "Revenu")
     g.ajouter_transaction("Achat riz", -5500, "Alimentation")
-    assert g.supprimer_transaction(1) == True
-    assert len(g.transactions) == 1
+    id_a_supprimer= g._transactions[0].id
+    assert g.supprimer_transaction(id_a_supprimer) == True
+    assert len(g._transactions) == 1
 
 
 def test_supprimer_transaction_inexistante():
@@ -122,7 +127,10 @@ def test_supprimer_transaction_inexistante():
     assert g.supprimer_transaction(999) == False
 
 def test_filtrer_par_categorie():
+    """Le filtrage par categorie doit retourner les bonnes transactions."""
     g = GestionnaireFinancier()
+    g._transactions = []
+    g._prochain_id = 1
     g.ajouter_transaction("Achat riz", -5500, "Alimentation")
     g.ajouter_transaction("Transport zem", -1500, "Transport")
     g.ajouter_transaction("Achat huile", -2000, "Alimentation")
@@ -133,3 +141,71 @@ def test_ajouter_mot_cle():
     g = GestionnaireFinancier()
     g.ajouter_mot_cle("Alimentation", "fiduciaire")
     assert g.categoriser("Achat fiduciaire") == "Alimentation"
+
+# Test gestion des exceptions
+
+def test_categoriser_description_vide():
+    """Une description vide doit retourner 'Autre' ."""
+    g = GestionnaireFinancier()
+    assert g.categoriser("") == "Autre"
+
+def test_categoriser_description_none():
+    """Une description None doit retourner 'Autre'. """
+    g =GestionnaireFinancier()
+    assert g.categoriser(None) == "Autre"
+
+def test_ajouter_transaction_montant_invalide():
+    """Un montant invalide ne doit pas planter l'application."""
+    g= GestionnaireFinancier()
+    try:
+        t = g.ajouter_transaction("Test", "abc", "Autre")
+        assert t is None
+    except Exception:
+        pass
+
+def test_supprimer_transaction_id_invalide():
+    """Un id invalide doit retourner False sans planter."""
+    g = GestionnaireFinancier()
+    assert g.supprimer_transaction("abc") == False
+
+def test_supprimer_transaction_id_inexistant():
+    """Un id inexistant doit retourner False."""
+    g = GestionnaireFinancier()
+    assert g.supprimer_transaction("9999") == False
+
+def test_modifier_transaction_id_invalide():
+    """Un id invalide doit retourner False sans planter."""
+    g = GestionnaireFinancier()
+    assert g.modifier_transaction("abc") == False
+
+def test_ajouter_budget_plafond_invalide():
+    """Un plafond invalide ne doit pas planter l'application."""
+    g = GestionnaireFinancier()
+    b = g.ajouter_budget("Alimentation", "abc", "04", "2026")
+    assert b is None
+
+def test_budget_division_par_zero():
+    """Un budget à zero ne doit pas provoquer une division par zéro."""
+    b= Budget("Test", 0, "04", "2026")
+    assert b.pourcentage_utilisation() == 0.0
+
+def test_transaction_description_setter():
+    """Le setter de description doit rejeter une valeur vide."""
+    d= Depense(1,"Achat riz", 5500, "Alimentation")
+    try:
+        d.description=""
+        assert False, "Aurait dû lever une ValueEror"
+    except ValueError:
+        pass
+
+def test_revenu_montant_negatif_force_positif():
+    """Un revenu avec montant négatif doit etre forcé positif."""
+    r = Revenu(1, "Salaire", -75000, "Revenu")
+    assert r.montant == 75000.0
+
+
+def test_depense_montant_positif_force_negatif():
+    """Une dépense avec montant positif doit etre forcée négative."""
+    d = Depense(1, "Achat", 5000, "Alimentation")
+    assert d.montant == -5000.0
+

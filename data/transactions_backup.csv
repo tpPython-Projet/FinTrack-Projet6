@@ -1,0 +1,3 @@
+id,date,description,montant,categorie,type
+1,2026-04-28,Salaire,75000.0,Revenu,revenu
+2,2026-04-28,Achat riz,-5500.0,Alimentation,depense

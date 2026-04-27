@@ -99,32 +99,47 @@ class GestionnaireFinancier:
         """
         Charge les transactions depuis le fichier CSV au démarrage.
         Reconstruit les objets Depense et Revenu depuis les données CSV.
+        Gère les erreurs de lecture et de format de donnés.
         """
         from src.csv_manager import lire_transactions
-        donnees = lire_transactions()
-        for d in donnees:
-            if d["type"] == "depense":
-                t = Depense(d["id"], d["description"],
-                            d["montant"], d["categorie"], d["date"])
-            else:
-                t = Revenu(d["id"], d["description"],
-                        d["montant"], d["categorie"], d["date"])
-            self._transactions.append(t)
-            if d["id"] >= self._prochain_id:
-                self._prochain_id = d["id"] + 1
+        try:
+            donnees = lire_transactions()
+            for d in donnees:
+                try:
+                    if d["type"] == "depense":
+                        t = Depense(int(d["id"]), d["description"],
+                                    float(d["montant"]), d["categorie"], d["date"])
+                    else:
+                        t = Revenu(int(d["id"]), d["description"],
+                                float(d["montant"]), d["categorie"], d["date"])
+                    self._transactions.append(t)
+                    if int(d["id"]) >= self._prochain_id:
+                        self._prochain_id = int(d["id"]) + 1
+                except (ValueError, KeyError) as e:
+                    print(f"⚠ Ligne ignorée dans transaction.csv : {e}")
+        except Exception as e:
+            print(f"⚠ Erreur chargement transactions : {e}")
 
 
     def _charger_budgets(self):
         """
         Charge les budgets depuis le fichier CSV au démarrage.
         Reconstruit les objets Budget depuis les données CSV.
+        Gère les erreurs de la lecture et de format de données.
         """
         from src.csv_manager import lire_budgets
-        donnees = lire_budgets()
-        for d in donnees:
-            b = Budget(d["categorie"], d["plafond"],
-                    d["mois"], d["annee"])
-            self._budgets.append(b)
+        try:
+            donnees = lire_budgets()
+            for d in donnees:
+                try:
+                    b = Budget(d["categorie"], float(d["plafond"]),
+                            d["mois"], d["annee"])
+                    self._budgets.append(b)
+                except (ValueError, KeyError) as e:
+                    print(f"⚠ Ligne ignorée dans budgets.csv : {e}")
+        except Exception as e: 
+            print(f"⚠ Erreur chargement budgets : {e}")
+
 
         
     # Propriétés
@@ -146,13 +161,20 @@ class GestionnaireFinancier:
         Analyse la description d'une transaction et retourne
         automatiquement la catégorie correspondante.
         Si aucun mot-clé ne correspond, retourne "Autre".
+        Gère l cas àù la description est None ou vide.
         """
-        description_lower = description.lower()
-        for categorie, mots in self._mots_cles.items():
-            for mot in mots:
-                if mot in description_lower:
-                    return categorie
-        return "Autre"
+        try:
+            if not description:
+                return "Autre"
+            description_lower = description.lower()
+            for categorie, mots in self._mots_cles.items():
+                for mot in mots:
+                    if mot in description_lower:
+                        return categorie
+            return "Autre"
+        except AttributeError:
+            return "Autre"
+        
     
     def ajouter_mot_cle(self, categorie, mot):
         """
@@ -171,42 +193,54 @@ class GestionnaireFinancier:
         """
         Crée et ajoute une nouvelle transaction à la liste.
         Sauvegarde automatiquement dans le CSV après ajout.
+        Gère les erreurs de type et sauvegarde CSV.
         """
         from src.csv_manager import sauvegarder_transactions, ecrire_journal
-        if categorie is None:
-            categorie = self.categoriser(description)
-        
-        if float(montant) < 0:
-            t= Depense(self._prochain_id, description,
-                        montant, categorie, date)
-        else:
-            t= Revenu(self._prochain_id, description,
-                        montant, categorie, date)
-        
-        self._transactions.append(t)
-        self._prochain_id += 1
-        sauvegarder_transactions(self._transactions)
-        ecrire_journal("AJOUT",
-                       f"Transaction #{t.id} : "
-                       f"{t.montant} FCFA - {t.description}")
-        return t
+        try:
+            if categorie is None:
+                categorie = self.categoriser(description)
+            
+            if float(montant) < 0:
+                t= Depense(self._prochain_id, description,
+                            montant, categorie, date)
+            else:
+                t= Revenu(self._prochain_id, description,
+                            montant, categorie, date)
+            
+            self._transactions.append(t)
+            self._prochain_id += 1
+            sauvegarder_transactions(self._transactions)
+            ecrire_journal("AJOUT",
+                        f"Transaction #{t.id} : "
+                        f"{t.montant} FCFA - {t.description}")
+            return t
+        except ValueError as e:
+            print(f"⚠ Erreur ajout transaction: {e}")
+            return None
     
     def supprimer_transaction(self, id):
         """
         Supprime une transaction par son id.
         Sauvegarde automatiquement après suppression.
+        Gère les erreurs du type sur l'id.
         """
+        
         from src.csv_manager import (sauvegarder_transactions, 
                                      ecrire_journal, sauvegarder_backup)
-        for i, t in enumerate(self._transactions):
-            if t._id == id:
-                sauvegarder_backup()
-                self._transactions.pop(i)
-                sauvegarder_transactions(self._transactions)
-                ecrire_journal("SUPPRESSION", 
-                               f"Transaction #{id} supprimée !")
-                return True
-        return False
+        try:
+            id=int(id)
+            for i, t in enumerate(self._transactions):
+                if t._id == id:
+                    sauvegarder_backup()
+                    self._transactions.pop(i)
+                    sauvegarder_transactions(self._transactions)
+                    ecrire_journal("SUPPRESSION", 
+                                f"Transaction #{id} supprimée !")
+                    return True
+            return False
+        except (ValueError, TypeError) as e:
+            print(f"⚠ Erreur suppression : {e}")
+            return False
     
     def modifier_transaction(self, id, description=None,
                               montant=None, categorie=None, date=None):
@@ -217,26 +251,31 @@ class GestionnaireFinancier:
 
         from src.csv_manager import (sauvegarder_transactions, 
                                      ecrire_journal, sauvegarder_backup)
-        for t in self._transactions:
-            if t._id == id:
-                sauvegarder_backup()
-                if description:
-                    t._description = description
-                if montant is not None:
-                    # On conserve le type (revenu/depense)
-                    if t.type_transaction() == "revenu":
-                        t._montant = abs(float(montant))
-                    else:
-                        t._montant = -abs(float(montant))
-                if categorie:
-                    t._categorie = categorie
-                if date:
-                    t._date = date
-                sauvegarder_transactions(self._transactions)
-                ecrire_journal("MODIFICATION", 
-                               f"Transactin #{id} modifiée !")
-                return True
-        return False
+        try:
+            id = int(id)
+            for t in self._transactions:
+                if t._id == id:
+                    sauvegarder_backup()
+                    if description:
+                        t._description = description
+                    if montant is not None:
+                        # On conserve le type (revenu/depense)
+                        if t.type_transaction() == "revenu":
+                            t._montant = abs(float(montant))
+                        else:
+                            t._montant = -abs(float(montant))
+                    if categorie:
+                        t._categorie = categorie
+                    if date:
+                        t._date = date
+                    sauvegarder_transactions(self._transactions)
+                    ecrire_journal("MODIFICATION", 
+                                f"Transactin #{id} modifiée !")
+                    return True
+            return False
+        except (ValueError, TypeError) as e:
+            print(f"⚠ Erreur modification: {e}")
+            return False
     
     # Calculs 
 
@@ -279,15 +318,20 @@ class GestionnaireFinancier:
         """
         Crée et ajoute un nouveau budget mensuel à la liste.
         Sauvegarde automatiquement dans le CSV.
+        Gère les erreurs de type sur le planfond.
         """
         from src.csv_manager import sauvegarder_budgets, ecrire_journal
-        b= Budget(categorie, plafond, mois, annee)
-        self._budgets.append(b)
-        sauvegarder_budgets(self._budgets)
-        ecrire_journal("BUDGET",
-                       f"Budget {categorie} défini : {plafond} FCFA")
-        return b
-    
+        try:
+            b= Budget(categorie, plafond, mois, annee)
+            self._budgets.append(b)
+            sauvegarder_budgets(self._budgets)
+            ecrire_journal("BUDGET",
+                        f"Budget {categorie} défini : {plafond} FCFA")
+            return b
+        except (ValueError, TypeError) as e:
+            print(f"⚠ Erreur ajout budget : {e}")
+            return None
+        
     def verifier_budget(self, categorie, mois, annee):
         """
         Vérifie l'état du budget d'une catégorie.

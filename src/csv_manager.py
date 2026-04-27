@@ -73,7 +73,7 @@ def sauvegarder_transactions(transactions, chemin=TRANSACTIONS_CSV):
             writer.writeheader()
             for t in transactions:
                 writer.writerow(t.to_dict())
-    except Execption as e:
+    except Exception as e:
         print(f"Erreur sauvegarde transactions : {e}")
         
 
@@ -154,7 +154,7 @@ def lire_config(chemin=CONFIG_CSV):
             reader = csv.DictReader(f)
             for ligne in reader:
                 return ligne
-    except FileNotFounderError:
+    except FileNotFoundError:
         return None
     except Exception as e: 
         print(f"Erreur lecture config : {e}")
