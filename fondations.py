@@ -18,7 +18,6 @@ Un dictionnaire associe des clés nommées à des valeurs. C'est donc le
 type de données idéal pour représenter une transaction financière car
 chaque champ a un nom précis : on accède à transaction ["montant] plutot
 qu'à transaction [3] et c'est plus lisible et moins sujet aux erreurs.
-
 """
 transaction_1={
     "id":1,
