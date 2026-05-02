@@ -13,10 +13,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 from datetime import date as Date
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(s.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scr.gestionnaire import GestionnaireFinancier 
-from scr.csv_manager import lire_config, sauvaege_config
+from src.gestionnaire import GestionnaireFinancier 
+from src.csv_manager import lire_config, sauvegarder_config
 
 # -- Couleurs et styles --- 
 COULEUR_FOND       = "#1E1E2E"
@@ -55,8 +55,8 @@ class FinTrackApp:
         else:
             self.nom_utilisateur = simpledialog.askstring(
                 "Bienvenue sur FinTrack",
-                "ENtrez votre rénom :",
-                initialvalue="utilisateur"                 
+                "Entrez votre prénom :",
+                initialvalue="Utilisateur"                 
             ) or "Utilisateur"
             sauvegarder_config(self.nom_utilisateur, "FCFA")
         
@@ -73,11 +73,11 @@ class FinTrackApp:
     def _configurer_style(self):
         """Configure le style vituel des widgets ttk."""
         style = ttk.Style()
-        style.them_use("clam")
+        style.theme_use("clam")
 
-        style.configure           ("TNotebook",                    background=COULEUR_FOND, 
+        style.configure("TNotebook", background=COULEUR_FOND, 
                         borderwidth=0)
-        style.configure("TNotebook.Tab",        background=COULEUR_SURFACE,
+        style.configure("TNotebook.Tab", background=COULEUR_SURFACE,
                         foreground=COULEUR_TEXTE,
                         padding=[15, 8],
                         font=POLICE_NORMAL)
@@ -102,7 +102,7 @@ class FinTrackApp:
         style.configure("Treeview",
                         background=COULEUR_SURFACE,
                         foreground=COULEUR_TEXTE,
-                        fieldbackground=COULEUR_SURFAC,font= POLICE_NORMAL,
+                        fieldbackground=COULEUR_SURFACE,font= POLICE_NORMAL,
                         rowheight=30)
         style.configure("Treeview.Heading",
                         background=COULEUR_ACCENT,
@@ -110,88 +110,88 @@ class FinTrackApp:
                         font=("Arial", 11, "bold"))
         
 
-        def _construire_header(self):
-            """Construit l'en_tête avec le titre et tableaude bord."""
-            header = tk.Frame(self.root,
-            bg=COULEUR_ACCENT,pady=15)
-            header.pack(fill="x")
+    def _construire_header(self):
+        """Construit l'en_tête avec le titre et tableaude bord."""
+        header = tk.Frame(self.root,
+        bg=COULEUR_ACCENT,pady=15)
+        header.pack(fill="x")
 
-            tk.Label(header,
-                    text="💰 FinTrack - Moniteur de Budget Personnel",
-                    font=("Arial", 16, "bold"),
-                    bg=COULEUR_ACCENT,
-                    fg="white").pack()
-            # Tableau de bord
-            dashboard = tk.Frame(self.root,
-            bg=COULEUR_SURFACE, pady=10)
-            dashboard.pack(fill="x", padx=0)
+        tk.Label(header,
+                text="💰 FinTrack - Moniteur de Budget Personnel",
+                font=("Arial", 16, "bold"),
+                bg=COULEUR_ACCENT,
+                fg="white").pack()
+        # Tableau de bord
+        dashboard = tk.Frame(self.root,
+        bg=COULEUR_SURFACE, pady=10)
+        dashboard.pack(fill="x", padx=0)
 
-            # Solde
-            self.lbl_solde = tk.Label(dashboard,
-                                                text="Solde : 0 FCFA",
-                                                font=("Arial",
-                                                13,
-                                                "bold"),bg=COULEUR_SURFACE,
-                                                fg=COULEUR_VERT )
-            self.lbl_solde.pack(side="left", padx=20)
+        # Solde
+        self.lbl_solde = tk.Label(dashboard,
+                                            text="Solde : 0 FCFA",
+                                            font=("Arial",
+                                            13,
+                                            "bold"),bg=COULEUR_SURFACE,
+                                            fg=COULEUR_VERT )
+        self.lbl_solde.pack(side="left", padx=20)
 
-            #Revenus
-            self.lbl_revenus = tk.Label(dashboard,
-                                                  text="📈 Revenus : 0 FCFA ",
-                                                  font=POLICE_NORMAL,
-                                                  bg=COULEUR_SURFACE,
-                                                  fg=COULEUR_VERT)
+        #Revenus
+        self.lbl_revenus = tk.Label(dashboard,
+                                                text="📈 Revenus : 0 FCFA ",
+                                                font=POLICE_NORMAL,
+                                                bg=COULEUR_SURFACE,
+                                                fg=COULEUR_VERT)
         self.lbl_revenus.pack(side="left",padx=20)
 
         #Dépenses
         self.lbl_depenses = tk.Label(dashboard,
-                                             text="📉 Dépenses : 0 FCFA",
-                                             font=POLICE_NORMAL,
-                                             bg=COULEUR_SURFACE,
+                                                text="📉 Dépenses : 0 FCFA",
+                                                font=POLICE_NORMAL,
+                                                bg=COULEUR_SURFACE,
                                             fg=COULEUR_ROUGE )  
         self.lbl_depenses.pack(side="left",padx=20)
 
         # Date
         tk.Label(dashboard,
-                          text=f"🗓 {Date.today().strftime('%d/%m/%Y')}",
-                          font= POLICE_NORMAL,
-                          bg=COULEUR_SURFACE,
-                          fg=COULEUR_TEXTE_GRIS).pack(side="right",padx=20)
+                            text=f"🗓 {Date.today().strftime('%d/%m/%Y')}",
+                            font= POLICE_NORMAL,
+                            bg=COULEUR_SURFACE,
+                            fg=COULEUR_TEXTE_GRIS).pack(side="right",padx=20)
 
         # Bienvenue                  
         tk.Label(dashboard,
-                          text=f"👋 {self.nom_utilisateur}",
-                          font= ("Arial", 11, "bold"),
-                          bg=COULEUR_SURFACE,
-                          fg=COULEUR_TEXTE).pack(side="right",
-                          padx=10)
-        def _construire_onglets(self):
-            """Construit les onglets principaux de l'application."""
-            self.notebook = ttk.Notebook(self.root)
-            self.notebook = ttk.Notebook(fill="both",
-            expand=True, padx=10, pady=10)
+                            text=f"👋 {self.nom_utilisateur}",
+                            font= ("Arial", 11, "bold"),
+                            bg=COULEUR_SURFACE,
+                            fg=COULEUR_TEXTE).pack(side="right",
+                            padx=10)
+    def _construire_onglets(self):
+        """Construit les onglets principaux de l'application."""
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
 
-            #Onglet Transactions
-            self.frame_transactions = ttk.Frame(self.notebook)
-            self.fnotebook.add(self.frame_transactions, text="💳 Transaction" )
-            self._construire_onglet_transactions()
+        #Onglet Transactions
+        self.frame_transactions = ttk.Frame(self.notebook)
+        self.notebook.add(self.frame_transactions, text="💳 Transaction" )
+        self._construire_onglet_transactions()
 
-            #Onglet Budgets
-            self.frame_budgets = ttk.Frame(self.notebook)
-            self.notebook.add(self.frame_budgets,text="🎯 Budgets")
-            self._construire_onglet_budgets()
+        #Onglet Budgets
+        self.frame_budgets = ttk.Frame(self.notebook)
+        self.notebook.add(self.frame_budgets,text="🎯 Budgets")
+        self._construire_onglet_budgets()
 
-            # Onglet Statistiques
-            self.frame_stats = ttk.Frame(self.notebook)
-            self.notebook.add(self.frame_stats,text="📊 Statistiques")
-            self._construire_onglet_stats()
+        # Onglet Statistiques
+        self.frame_stats = ttk.Frame(self.notebook)
+        self.notebook.add(self.frame_stats,text="📊 Statistiques")
+        self._construire_onglet_stats()
 
-            #Onglet Recherche
-            self.frame_recherche = ttk.Frame(self.notebook)
-            self.notebook.add(self.frame_recherche,
-                          text="🔍 Recherche")
-            self._construire_onglet_recherche()
-    def _construire_onglet_transations(self):
+        #Onglet Recherche
+        self.frame_recherche = ttk.Frame(self.notebook)
+        self.notebook.add(self.frame_recherche,
+                        text="🔍 Recherche")
+        self._construire_onglet_recherche()
+
+    def _construire_onglet_transactions(self):
         """Construit l'onglet de gestion des transactions."""
         frame = self.frame_transactions
 
@@ -250,7 +250,7 @@ class FinTrackApp:
 
         self.tree_transactions.tag_configure("depense",foreground=COULEUR_ROUGE)
     
-    def _construire_onglet_transations(self):
+    def _construire_onglet_budgets(self):
         """Construit l'onglet de gestion des budgets."""
         frame = self.frame_budgets
 
@@ -268,7 +268,7 @@ class FinTrackApp:
                     side="right", padx=5)
 
         # Tableau des budgets
-        cols = ("Catégorie", "PLafond", "Dépensé", "Resultat", "Utilisation")
+        cols = ("Catégorie", "Plafond", "Dépensé", "Restant", "Utilisation")
         self.tree_budgets = ttk.Treeview(frame,     
             columns=cols, show= "headings", height=15)
 
@@ -296,6 +296,7 @@ class FinTrackApp:
         frame = self.frame_stats
 
         btn_frame = tk.Frame(frame, bg=COULEUR_FOND, pady=8)
+        btn_frame.pack(fill="x", padx = 10)
 
         ttk.Button(btn_frame,
                   text="🥧 Camembert dépenses",
@@ -322,7 +323,7 @@ class FinTrackApp:
                    command=self.afficher_budget_vs_reel).pack(
                        side="left", padx=5)
           
-       # Zone statistiques texte
+        # Zone statistiques texte
         self.txt_stats = tk.Text(frame,
                                  bg=COULEUR_SURFACE,
                                  fg=COULEUR_TEXTE,
@@ -356,7 +357,6 @@ class FinTrackApp:
                                          insertbackground="white")
         self.entry_recherche.pack(side="left", padx=5)
 
-        ttk.entry_recherche.pack(side="left", padx=5)
 
         ttk.Button(search_frame,
                     text="Rechercher",
@@ -602,7 +602,7 @@ class FinTrackApp:
                     bg=COULEUR_FOND, fg=COULEUR_TEXTE,
                     font=POLICE_NORMAL).grid(
                         row=3, column=0, sticky="w", pady=8) 
-        entry_date = tk.Entry(form, bg=COULEUR_SURFRGE,
+        entry_date = tk.Entry(form, bg=COULEUR_SURFACE,
                                 fg=COULEUR_TEXTE, font=POLICE_NORMAL, width=28,
                                 insertbackground="white" )
                 
@@ -691,101 +691,101 @@ class FinTrackApp:
                     command=valider).pack(pady=15)
 
 
-        def modifier_transaction(self):
-            """Modifie la transaction sélectionnée."""
-            selection = self.tree_transactions.selection()
-            if not selection:
-                messagebox.showwarning("Attention",
-                                    "Sélectionnez une transaction.")
+    def modifier_transaction(self):
+        """Modifie la transaction sélectionnée."""
+        selection = self.tree_transactions.selection()
+        if not selection:
+            messagebox.showwarning("Attention",
+                                "Sélectionnez une transaction.")
+            return
+
+        item = self.tree_transactions.item(selection[0])
+        id_t = int(item["values"][0])
+        desc_actuelle = item["values"][2]
+        montant_actuel = item["values"][4].replace(" FCFA", "").replace(" ", "")
+        cat_actuelle = item["values"][3]
+        date_actuelle = item["values"][1]
+
+        fenetre = tk.Toplevel(self.root)
+        fenetre.title("Modifier une transaction")
+        fenetre.geometry("450x380")
+        fenetre.configure(bg=COULEUR_FOND)
+        fenetre.grab_set()
+
+        tk.Label(fenetre,
+                text="✏️ MODIFIER LA TRANSACTION",
+                font=POLICE_TITRE,
+                bg=COULEUR_FOND,
+                fg=COULEUR_TEXTE).pack(pady=15)
+
+        form = tk.Frame(fenetre, bg=COULEUR_FOND)
+        form.pack(padx=20, fill="x")
+
+        tk.Label(form, text="Description :",
+                bg=COULEUR_FOND, fg=COULEUR_TEXTE,
+                font=POLICE_NORMAL).grid(
+                    row=0, column=0, sticky="w", pady=8)
+        entry_desc = tk.Entry(form, bg=COULEUR_SURFACE,
+                            fg=COULEUR_TEXTE,
+                            font=POLICE_NORMAL, width=28,
+                            insertbackground="white")
+        entry_desc.insert(0, desc_actuelle)
+        entry_desc.grid(row=0, column=1, sticky="ew", pady=8)
+
+        tk.Label(form, text="Montant :",
+                bg=COULEUR_FOND, fg=COULEUR_TEXTE,
+                font=POLICE_NORMAL).grid(
+                    row=1, column=0, sticky="w", pady=8)
+        entry_montant = tk.Entry(form, bg=COULEUR_SURFACE,
+                                fg=COULEUR_TEXTE,
+                                font=POLICE_NORMAL, width=28,
+                                insertbackground="white")
+        entry_montant.insert(0, montant_actuel)
+        entry_montant.grid(row=1, column=1, sticky="ew", pady=8)
+
+        tk.Label(form, text="Date :",
+                bg=COULEUR_FOND, fg=COULEUR_TEXTE,
+                font=POLICE_NORMAL).grid(
+                    row=2, column=0, sticky="w", pady=8)
+        entry_date = tk.Entry(form, bg=COULEUR_SURFACE,
+                            fg=COULEUR_TEXTE,
+                            font=POLICE_NORMAL, width=28,
+                            insertbackground="white")
+        entry_date.insert(0, date_actuelle)
+        entry_date.grid(row=2, column=1, sticky="ew", pady=8)
+
+        tk.Label(form, text="Catégorie :",
+                bg=COULEUR_FOND, fg=COULEUR_TEXTE,
+                font=POLICE_NORMAL).grid(
+                    row=3, column=0, sticky="w", pady=8)
+        CATEGORIES = ["Alimentation", "Transport", "Logement",
+                    "Santé", "Loisirs", "Éducation",
+                    "Revenu", "Autre"]
+        cat_var = tk.StringVar(value=cat_actuelle)
+        combo_cat = ttk.Combobox(form, textvariable=cat_var,
+                                values=CATEGORIES,
+                                state="readonly", width=26)
+        combo_cat.grid(row=3, column=1, sticky="ew", pady=8)
+
+        def valider():
+            desc = entry_desc.get().strip() or None
+            try:
+                montant = float(
+                    entry_montant.get().replace(" ", ""))
+            except ValueError:
+                messagebox.showerror("Erreur", "Montant invalide.")
                 return
+            date = entry_date.get().strip() or None
+            categorie = cat_var.get() or None
 
-            item = self.tree_transactions.item(selection[0])
-            id_t = int(item["values"][0])
-            desc_actuelle = item["values"][2]
-            montant_actuel = item["values"][4].replace(" FCFA", "").replace(" ", "")
-            cat_actuelle = item["values"][3]
-            date_actuelle = item["values"][1]
+            self.g.modifier_transaction(id_t, desc, montant,
+                                        categorie, date)
+            self.rafraichir()
+            fenetre.destroy()
+            messagebox.showinfo("Succès", "✓ Transaction modifiée !")
 
-            fenetre = tk.Toplevel(self.root)
-            fenetre.title("Modifier une transaction")
-            fenetre.geometry("450x380")
-            fenetre.configure(bg=COULEUR_FOND)
-            fenetre.grab_set()
-
-            tk.Label(fenetre,
-                    text="✏️ MODIFIER LA TRANSACTION",
-                    font=POLICE_TITRE,
-                    bg=COULEUR_FOND,
-                    fg=COULEUR_TEXTE).pack(pady=15)
-
-            form = tk.Frame(fenetre, bg=COULEUR_FOND)
-            form.pack(padx=20, fill="x")
-
-            tk.Label(form, text="Description :",
-                    bg=COULEUR_FOND, fg=COULEUR_TEXTE,
-                    font=POLICE_NORMAL).grid(
-                        row=0, column=0, sticky="w", pady=8)
-            entry_desc = tk.Entry(form, bg=COULEUR_SURFACE,
-                                fg=COULEUR_TEXTE,
-                                font=POLICE_NORMAL, width=28,
-                                insertbackground="white")
-            entry_desc.insert(0, desc_actuelle)
-            entry_desc.grid(row=0, column=1, sticky="ew", pady=8)
-
-            tk.Label(form, text="Montant :",
-                    bg=COULEUR_FOND, fg=COULEUR_TEXTE,
-                    font=POLICE_NORMAL).grid(
-                        row=1, column=0, sticky="w", pady=8)
-            entry_montant = tk.Entry(form, bg=COULEUR_SURFACE,
-                                    fg=COULEUR_TEXTE,
-                                    font=POLICE_NORMAL, width=28,
-                                    insertbackground="white")
-            entry_montant.insert(0, montant_actuel)
-            entry_montant.grid(row=1, column=1, sticky="ew", pady=8)
-
-            tk.Label(form, text="Date :",
-                    bg=COULEUR_FOND, fg=COULEUR_TEXTE,
-                    font=POLICE_NORMAL).grid(
-                        row=2, column=0, sticky="w", pady=8)
-            entry_date = tk.Entry(form, bg=COULEUR_SURFACE,
-                                fg=COULEUR_TEXTE,
-                                font=POLICE_NORMAL, width=28,
-                                insertbackground="white")
-            entry_date.insert(0, date_actuelle)
-            entry_date.grid(row=2, column=1, sticky="ew", pady=8)
-
-            tk.Label(form, text="Catégorie :",
-                    bg=COULEUR_FOND, fg=COULEUR_TEXTE,
-                    font=POLICE_NORMAL).grid(
-                        row=3, column=0, sticky="w", pady=8)
-            CATEGORIES = ["Alimentation", "Transport", "Logement",
-                        "Santé", "Loisirs", "Éducation",
-                        "Revenu", "Autre"]
-            cat_var = tk.StringVar(value=cat_actuelle)
-            combo_cat = ttk.Combobox(form, textvariable=cat_var,
-                                    values=CATEGORIES,
-                                    state="readonly", width=26)
-            combo_cat.grid(row=3, column=1, sticky="ew", pady=8)
-
-            def valider():
-                desc = entry_desc.get().strip() or None
-                try:
-                    montant = float(
-                        entry_montant.get().replace(" ", ""))
-                except ValueError:
-                    messagebox.showerror("Erreur", "Montant invalide.")
-                    return
-                date = entry_date.get().strip() or None
-                categorie = cat_var.get() or None
-
-                self.g.modifier_transaction(id_t, desc, montant,
-                                            categorie, date)
-                self.rafraichir()
-                fenetre.destroy()
-                messagebox.showinfo("Succès", "✓ Transaction modifiée !")
-
-            ttk.Button(fenetre, text="✓ Valider",
-                    command=valider).pack(pady=15)
+        ttk.Button(fenetre, text="✓ Valider",
+                command=valider).pack(pady=15)
 
 
     def supprimer_transaction(self):
@@ -804,13 +804,14 @@ class FinTrackApp:
             self.g.supprimer_transaction(id_t)
             self.rafraichir()
             messagebox.showinfo("Succès","✓ Transaction supprimée!")
+
     def ouvrir_ajout_budget(self):
         """Ouvre une fenêtre pour définir un budget."""
         fenetre = tk.Toplevel(self.root)     
         fenetre.title("Définir un budget")     
         fenetre.geometry ("400x300")     
         fenetre.configure (bg=COULEUR_FOND)     
-        fenetre.grad_set()  
+        fenetre.grab_set()  
 
         tk.Label(fenetre,
                  text="🎯 DÉFINIR UN BUDGET",
@@ -1036,27 +1037,50 @@ class FinTrackApp:
         plt.tight_layout()
         plt.show()
 
+    
     def afficher_courbe(self):
         """
         Deux courbes : évolution cumulée des revenus et des dépenses.
-        Permet de voir visuellement quand les dépenses dépassent les revenus.
+        Courbes lisses interpolées style mathématique.
         """
         import matplotlib.pyplot as plt
+        import numpy as np
+        from scipy.interpolate import make_interp_spline
+        import matplotlib.patheffects as pe
+        from datetime import datetime, date as DateType
+        import matplotlib.dates as mdates
 
         if not self.g.transactions:
             messagebox.showinfo("Info", "Aucune transaction enregistrée.")
             return
 
+        def to_datetime(d):
+            """Convertit n'importe quel format de date en datetime."""
+            if isinstance(d, datetime):
+                return d
+            if isinstance(d, DateType):
+                return datetime(d.year, d.month, d.day)
+            if isinstance(d, str):
+                for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
+                    try:
+                        return datetime.strptime(d.strip(), fmt)
+                    except ValueError:
+                        continue
+            return None  # date non convertible → ignorée
+
         transactions_triees = sorted(self.g.transactions,
-                                      key=lambda x: x.date)
-        dates = []
+                                    key=lambda x: str(x.date))
+        dates_dt = []
         revenus_cumules = []
         depenses_cumulees = []
         rev_cumule = 0
         dep_cumule = 0
 
         for t in transactions_triees:
-            dates.append(t.date)
+            dt = to_datetime(t.date)
+            if dt is None:
+                continue  # ignore les dates invalides
+            dates_dt.append(dt)
             if t.type_transaction() == "revenu":
                 rev_cumule += t.montant
             else:
@@ -1064,72 +1088,119 @@ class FinTrackApp:
             revenus_cumules.append(rev_cumule)
             depenses_cumulees.append(dep_cumule)
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
-        fig.patch.set_facecolor("#1E1E2E")
+        if len(dates_dt) < 2:
+            messagebox.showinfo(
+                "Info",
+                "Pas assez de transactions valides pour tracer la courbe.")
+            return
 
-        # Graphique 1 - Revenues et dépenses cummulés
-        ax1.set_facecolor("#2A2A3E")
-        ax1.plot(dates, revenus_cumules,
-                color=COULEUR_VERT, linewidth=2.5,
-                marker="o", markersize=5,
-                label="Revenus cumulés")
-        ax1.fill_between(dates, revenus_cumules,
-                                alpha=0.15,
-                                color=COULEUR_VERT)
-        ax1.plot(dates, depences_cumules,
-                color=COULEUR_ROUGE, linewidth=2.5,
-                marker="s", markersize=5,
-                label="Dépenses cumulés")
-        ax1.fill_between(dates, depenses_cumules,
-                                alpha=0.15,
-                                color=COULEUR_ROUGE)
-        ax1.set_title("Évolution cumulée — Revenus vs Dépenses",
-                      color="white", fontsize=13)
-        ax1.tick_params(colors="white", rotation=45)
-        ax1.legend(facecolor="#2A2A3E",
-                   labelcolor="white", fontsize=10)
-        ax1.spines["bottom"].set_color("#94A3B8")
-        ax1.spines["left"].set_color("#94A3B8")
-        ax1.spines["top"].set_visible(False)
-        ax1.spines["right"].set_visible(False)
+        # Conversion unique et fiable en float matplotlib
+        dates_num = np.array(mdates.date2num(dates_dt))
+        rev_arr = np.array(revenus_cumules, dtype=float)
+        dep_arr = np.array(depenses_cumulees, dtype=float)
 
-        # Graphique 2 — Évolution du solde net
-        soldes = [r - d for r, d in
-                  zip(revenus_cumules, depenses_cumulees)]
-        ax2.set_facecolor("#2A2A3E")
-        couleurs_pts = [COULEUR_VERT if s >= 0 else COULEUR_ROUGE
-                        for s in soldes]
-        ax2.plot(dates, soldes,
-                 color=COULEUR_ACCENT, linewidth=2.5,
-                 marker="o", markersize=6)
-        ax2.fill_between(dates, soldes, 0,
-                         where=[s >= 0
-                         for s in soldes],
-                         alpha=0.2,
-                         color=COULEUR_VERT,
-                         label="solde positif")
-        ax2.fill_between(dates, soldes, 0,
-                         where=[s < 0
-                         for s in soldes],
-                         alpha=0.2,
-                         color=COULEUR_ROUGE,
-                         label="solde négatif")
+        def lisser_courbe(x, y):
+            """Lisse une courbe avec spline cubique si assez de points."""
+            if len(x) >= 4:
+                try:
+                    x_new = np.linspace(x.min(), x.max(), 400)
+                    spl = make_interp_spline(x, y, k=3)
+                    return x_new, spl(x_new)
+                except Exception:
+                    pass  # si spline échoue → courbe brute
+            return x, np.array(y)
+
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 11))
+        fig.patch.set_facecolor("#0F0F1A")
+        fig.subplots_adjust(hspace=0.4)
+
+        # ── GRAPHIQUE 1 : Revenus et Dépenses cumulés ──
+        ax1.set_facecolor("#13132A")
+        ax1.grid(color="#ffffff10", linestyle="--",
+                linewidth=0.6, zorder=0)
+
+        x_s, rev_s = lisser_courbe(dates_num, rev_arr)
+        _, dep_s   = lisser_courbe(dates_num, dep_arr)
+
+        ax1.plot(x_s, rev_s,
+                color=COULEUR_VERT, linewidth=2.8,
+                label="Revenus cumulés",
+                path_effects=[
+                    pe.SimpleLineShadow(shadow_color="#10B98155", linewidth=8),
+                    pe.Normal()])
+        ax1.fill_between(x_s, rev_s, alpha=0.12, color=COULEUR_VERT)
+
+        ax1.plot(x_s, dep_s,
+                color=COULEUR_ROUGE, linewidth=2.8,
+                label="Dépenses cumulées",
+                path_effects=[
+                    pe.SimpleLineShadow(shadow_color="#EF444455", linewidth=8),
+                    pe.Normal()])
+        ax1.fill_between(x_s, dep_s, alpha=0.12, color=COULEUR_ROUGE)
+
+        ax1.scatter(dates_num, revenus_cumules,
+                    color=COULEUR_VERT, s=50, zorder=5,
+                    edgecolors="white", linewidths=0.8)
+        ax1.scatter(dates_num, depenses_cumulees,
+                    color=COULEUR_ROUGE, s=50, zorder=5,
+                    edgecolors="white", linewidths=0.8)
+
+        ax1.xaxis.set_major_formatter(mdates.DateFormatter("%d/%m"))
+        ax1.xaxis_date()
+        ax1.set_title("📈 Évolution cumulée — Revenus vs Dépenses",
+                    color="white", fontsize=13, fontweight="bold", pad=15)
+        ax1.tick_params(colors="white", rotation=45, labelsize=9)
+        ax1.legend(facecolor="#1E1E2E", labelcolor="white",
+                fontsize=10, framealpha=0.8)
+        for spine in ax1.spines.values():
+            spine.set_color("#ffffff20")
+
+        # ── GRAPHIQUE 2 : Solde net ──
+        ax2.set_facecolor("#13132A")
+        ax2.grid(color="#ffffff10", linestyle="--",
+                linewidth=0.6, zorder=0)
+
+        soldes  = [r - d for r, d in zip(revenus_cumules, depenses_cumulees)]
+        sol_arr = np.array(soldes, dtype=float)
+        x_s2, sol_s = lisser_courbe(dates_num, sol_arr)
+
+        ax2.fill_between(x_s2, sol_s, 0,
+                        where=sol_s >= 0,
+                        alpha=0.25, color=COULEUR_VERT,
+                        label="Solde positif")
+        ax2.fill_between(x_s2, sol_s, 0,
+                        where=sol_s < 0,
+                        alpha=0.25, color=COULEUR_ROUGE,
+                        label="Solde négatif")
+
+        ax2.plot(x_s2, sol_s,
+                color=COULEUR_ACCENT, linewidth=3,
+                path_effects=[
+                    pe.SimpleLineShadow(shadow_color="#7C3AED66", linewidth=10),
+                    pe.Normal()])
+
+        couleurs_pts = [COULEUR_VERT if s >= 0
+                        else COULEUR_ROUGE for s in soldes]
+        ax2.scatter(dates_num, soldes,
+                    color=couleurs_pts, s=60, zorder=5,
+                    edgecolors="white", linewidths=0.8)
+
         ax2.axhline(y=0, color="white",
-                    linestyle="--", linewidth=1, alpha=0.5)
-        ax2.set_title("Evolution du solde net",
-                        color="white",
-                        fontsize=13)
-        ax2.tick_params(facecolors="white", rotation=45)
-        ax2.legend(facecolor="#2A2A3E",
-                    labelcolor="white", fontsize=10)
-        ax2.spines["bottom"].set_color("#94A3B8")
-        ax2.spines["left"].set_color("#94A3B8")
-        ax2.spines["top"].set_visible(False)
-        ax2.spines["right"].set_visible(False)
+                    linestyle="--", linewidth=1.2, alpha=0.4)
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter("%d/%m"))
+        ax2.xaxis_date()
+        ax2.set_title("💰 Évolution du solde net",
+                    color="white", fontsize=13, fontweight="bold", pad=15)
+        ax2.tick_params(colors="white", rotation=45, labelsize=9)
+        ax2.legend(facecolor="#1E1E2E", labelcolor="white",
+                fontsize=10, framealpha=0.8)
+        for spine in ax2.spines.values():
+            spine.set_color("#ffffff20")
 
         plt.tight_layout()
         plt.show()
-    
+
+
     def afficher_budget_vs_reel(self):
         """
         Graphique budget prévu vs dépenses réelles par carégorie.
@@ -1140,7 +1211,7 @@ class FinTrackApp:
         import numpy as np
 
         if not self.g.budgets:
-            messagebox.showinfo("Info", "Aucin budget défini.")
+            messagebox.showinfo("Info", "Aucun budget défini.")
             return
         
         categories = [b.categorie for b in self.g.budgets]
@@ -1161,8 +1232,8 @@ class FinTrackApp:
             width=largeur, color=COULEUR_ACCENT,
             label="Budget prévu", alpha=0.85,
             edgecolor="#1E1E2E")
-        barres_plafond = ax.bar(
-            [i - largeur/2 for i in x], plafonds,
+        barres_dep = ax.bar(
+            [i + largeur/2 for i in x], depenses,
             width=largeur, color=couleurs_dep,
             label="Dépenses réelles", alpha=0.85,
             edgecolor="#1E1E2E")
@@ -1170,7 +1241,7 @@ class FinTrackApp:
         # Ligne de plafond
         for i, (p, b) in enumerate(zip(plafonds, self.g.budgets)):
             if b.est_depasse():
-                ax.annotate("⚠ DÉPASSÉ", xy=(i, b.depenss), 
+                ax.annotate("⚠ DÉPASSÉ", xy=(i, b.depenses), 
                             xytext=(i, b.depenses * 1.05),
                             color=COULEUR_ROUGE,
                             fontsize=9,
@@ -1188,16 +1259,18 @@ class FinTrackApp:
                   labelcolor="white", fontsize=10)
         ax.spines["bottom"].set_color("#94A3B8")
         ax.spines["left"].set_color("#94A3B8")
-        ax.spines["top"].set_color(False)
-        ax.spines["right"].set_color(False)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        plt.tight_layout()
+        plt.show()
+
     def filtrer_periode(self):
         """ Filtre les transactions par période."""
         date_debut = self.entry_date_debut.get().strip()
         date_fin = self.entry_date_fin.get().strip()
 
-        if not date_debut or not date_fini:
-            messagebox.showwarning
-            ("Attention", "Entrez une date de début et de fin.")
+        if not date_debut or not date_fin:
+            messagebox.showwarning("Attention", "Entrez une date de début et de fin.")
             return
 
         for item in self.tree_recherche.get_children():
@@ -1205,7 +1278,7 @@ class FinTrackApp:
 
         resultats = self.g.filtrer_par_periode(date_debut, date_fin)
         for t in resultats:
-            montant = f"{t.montnt:,.0f} FCFA".replace(",","")
+            montant = f"{t.montant:,.0f} FCFA".replace(",","")
             tag = t.type_transaction()
             self.tree_recherche.insert(
                     "", "end",
@@ -1221,8 +1294,8 @@ class FinTrackApp:
     def exporter_rapport(self):
         """Exporte le rapport mensuel en CSV."""
         mois = Date.today().strftime("%m")
-        annee = Date.today().strftime("%y")
-        chemin = self.g.export_mensuel(mois, annee)
+        annee = Date.today().strftime("%Y")
+        chemin = self.g.exporter_rapport_mensuel(mois, annee)
         if chemin:
             messagebox.showinfo(
                 "Exporter réussi",
@@ -1243,5 +1316,5 @@ def main():
     root.mainloop()
 
 
-    if __name__ =="__main__":
-        main()
+if __name__ =="__main__":
+    main()

@@ -58,3 +58,46 @@
 2026-04-28 00:00:20,DEMARRAGE,Application FinTrack démarrée
 2026-04-28 00:00:20,DEMARRAGE,Application FinTrack démarrée
 2026-04-28 00:00:20,DEMARRAGE,Application FinTrack démarrée
+2026-04-28 00:57:56,DEMARRAGE,Application FinTrack démarrée
+2026-04-28 00:59:59,DEMARRAGE,Application FinTrack démarrée
+2026-04-28 01:00:54,SUPPRESSION,Transaction #3 supprimée !
+2026-04-28 01:01:03,SUPPRESSION,Transaction #2 supprimée !
+2026-04-28 01:01:10,SUPPRESSION,Transaction #1 supprimée !
+2026-04-28 01:01:59,AJOUT,Transaction #4 : 9000000.0 FCFA - salaire
+2026-04-28 01:02:56,AJOUT,Transaction #5 : -44400.0 FCFA - Zem
+2026-04-28 01:03:25,AJOUT,Transaction #6 : 30000.0 FCFA - PRIME
+2026-04-28 01:03:41,AJOUT,Transaction #7 : -3444.0 FCFA - ffg
+2026-04-28 01:04:35,BUDGET,Budget Transport défini : 2000.0 FCFA
+2026-05-01 00:25:25,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 00:56:55,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 01:09:22,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 01:14:18,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 01:19:00,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 01:21:21,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 01:24:06,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 01:25:19,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 01:27:12,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 01:27:58,AJOUT,Transaction #1 : 400000.0 FCFA - Salaire
+2026-05-01 01:28:26,AJOUT,Transaction #2 : 300000.0 FCFA - Prime
+2026-05-01 01:28:47,AJOUT,Transaction #3 : -60000.0 FCFA - RIZ
+2026-05-01 01:29:09,AJOUT,Transaction #4 : -100000.0 FCFA - Santé
+2026-05-01 01:29:33,AJOUT,Transaction #5 : -50000.0 FCFA - Sport
+2026-05-01 01:30:06,AJOUT,Transaction #6 : -150000.0 FCFA - LOYER
+2026-05-01 01:30:27,AJOUT,Transaction #7 : 50000.0 FCFA - job
+2026-05-01 01:31:13,AJOUT,Transaction #8 : -80000.0 FCFA - COURS d'anglais
+2026-05-01 01:31:47,AJOUT,Transaction #9 : -90000.0 FCFA - ZEM
+2026-05-01 01:32:13,MODIFICATION,Transactin #2 modifiée !
+2026-05-01 01:32:33,BUDGET,Budget Alimentation défini : 100000.0 FCFA
+2026-05-01 01:32:45,SUPPRESSION,Transaction #3 supprimée !
+2026-05-01 01:33:03,AJOUT,Transaction #10 : -150000.0 FCFA - RIZ
+2026-05-01 01:34:06,MODIFICATION,Transactin #10 modifiée !
+2026-05-01 01:34:25,DEMARRAGE,Application FinTrack démarrée
+2026-05-01 01:50:22,DEMARRAGE,Application FinTrack démarrée
+2026-05-02 07:22:29,DEMARRAGE,Application FinTrack démarrée
+2026-05-02 07:23:33,DEMARRAGE,Application FinTrack démarrée
+2026-05-02 07:24:22,AJOUT,Transaction #11 : -3000000.0 FCFA - fytuji
+2026-05-02 07:42:40,DEMARRAGE,Application FinTrack démarrée
+2026-05-02 07:52:15,DEMARRAGE,Application FinTrack démarrée
+2026-05-02 08:04:43,DEMARRAGE,Application FinTrack démarrée
+2026-05-02 08:05:17,SUPPRESSION,Transaction #11 supprimée !
+2026-05-02 08:07:07,AJOUT,Transaction #12 : -3000000.0 FCFA - fudji

@@ -105,7 +105,6 @@ class Budget:
             "plafond": self._plafond,
             "mois": self._mois,
             "annee": self._annee,
-            "depenses": self._depenses
         }
     def __str__(self):
         """Affichage lisible du budget."""

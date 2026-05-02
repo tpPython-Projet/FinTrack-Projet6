@@ -1,7 +1,7 @@
 """
 main.py
 Projet : FinTrack - Moniteur de Budget Persoonel
-Bloc 4: Persistance0 + Amélioration de l'interface.
+Bloc 4, 5 & 6 : Persistance, Qualité et Interface
 Description : Menu principal, point d'entrée de l'application FinTrack
 Auteurs : HOUSSOU Towanou Bliss Espérance / AMOUSSOU Firmin
 Date : 25/04/2026
@@ -30,7 +30,7 @@ def formater_montant(montant):
     Formate un montat avec un séparateur de milliers.
     Exemple : 5500.0 ---> "5 500 FCFA"
     """
-    return f"{montant:,.0f}".replace(",", "") + "FCFA"
+    return f"{montant:,.0f}".replace(",", " ") + " FCFA"
 
 def barre_progression(pourcentage, largeur=20):
     """

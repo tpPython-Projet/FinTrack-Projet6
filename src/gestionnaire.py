@@ -9,7 +9,6 @@ Date : 22/04/2026
 """
 import sys
 import os
-import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.transaction import Transaction, Depense, Revenu
@@ -91,6 +90,7 @@ class GestionnaireFinancier:
         # Charger les données existantes
         self._charger_transactions()
         self._charger_budgets()
+        self._recalculer_depenses_budgets()
 
         # Enregistrer le démarrage
         ecrire_journal("DEMARRAGE", "Application FinTrack démarrée")
@@ -140,6 +140,21 @@ class GestionnaireFinancier:
         except Exception as e: 
             print(f"⚠ Erreur chargement budgets : {e}")
 
+    def _recalculer_depenses_budgets(self):
+        """
+        Recalcule les dépenses de chaque budget en fonction
+        des transactions chargées depuis le CSV.
+        Appelée au démarrage après le chargement des données.
+        """
+
+        for b in self._budgets:
+            b._depenses = 0.0
+            for t in self._transactions:
+                if(t.type_transaction() == "depense" and
+                        t._categorie == b._categorie and
+                        t._date[5:7] == b._mois and
+                        t._date[:4] == b._annee):
+                    b._depenses += abs(t._montant)
 
         
     # Propriétés
@@ -208,6 +223,7 @@ class GestionnaireFinancier:
                             montant, categorie, date)
             
             self._transactions.append(t)
+            self._recalculer_depenses_budgets()
             self._prochain_id += 1
             sauvegarder_transactions(self._transactions)
             ecrire_journal("AJOUT",
@@ -304,6 +320,18 @@ class GestionnaireFinancier:
         return [t for t in self._transactions 
                 if t._date == date]
     
+    def filtrer_par_periode(self, date_debut, date_fin):
+        """
+        Retourne les transactions entre deux dates (incluses).
+        Les dates doivent être au format AAAA-MM-JJ. 
+        """
+        try:
+            return [t for t in self._transactions
+                    if date_debut <= t._date <= date_fin]
+        except Exception as e:
+            print(f"⚠ Erreur filtrage période : {e}")
+            return []
+    
     def rechercher(self, mot_cle):
         """Retourne les transactions dont la description 
            contient le mot-clé donné.
@@ -342,6 +370,91 @@ class GestionnaireFinancier:
                 b._mois == mois and b._annee == annee):
                 return b
         return None
+    
+
+    def exporter_rapport_mensuel(self, mois, annee):
+        """
+        Exporte un rapport mensuel complet en CSV.
+        Contient toutes les transactions du mois, les totaux 
+        et le récapitulatif par catégorie.
+        """
+        from src.csv_manager import ecrire_journal
+        import os
+        try:
+            import csv
+            BASE = os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))
+            dossier = os.path.join(BASE, "exports")
+            os.makedirs(dossier, exist_ok=True)
+
+            nom_fichier = f"rapport_{mois}_{annee}.csv"
+            chemin = os.path.join(dossier, nom_fichier)
+
+            # Filtrer les transactions du mois
+            transactions_mois = [
+                t for t in self._transactions 
+                if t._date[5:7] == mois and t._date[:4] == annee
+            ]
+            
+            with open(chemin, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+
+                # En-tete du rapport
+                writer.writerow(["RAPPORT MENSUEL FINTRACK"])
+                writer.writerow([f"Période : {mois}/{annee}"])
+                writer.writerow([])
+
+                # Transactions 
+
+                writer.writerow(["ID", "Date", "Description",
+                                  "Catégorie", "Montant", "Type"])
+                for t in transactions_mois:
+                    writer.writerow([
+                        t.id, t._date, t._description,
+                        t._categorie, t._montant,
+                        t.type_transaction()
+                    ])
+                writer.writerow([])
+
+                # Totaux
+                revenus = sum(t._montant for t in transactions_mois
+                              if t.type_transaction() == "revenu")
+                depenses = sum(abs(t._montant) for t in transactions_mois
+                              if t.type_transaction() == "depense")
+                solde = revenus - depenses
+
+                writer.writerow(["TOTAUX"])
+                writer.writerow(["Total revenus", revenus])
+                writer.writerow(["Total dépenses", depenses])
+                writer.writerow(["Solde", solde])
+                writer.writerow([])
+
+                # Récapitulatif par catégorie
+                writer.writerow(["RÉCAPITULATIF PAR CATÉGORIE"])
+                writer.writerow(["Catégorie", "Total dépenses",
+                                 "Budget prévu", "Écart"])
+                
+                categories = {}
+                for t in transactions_mois:
+                    if t.type_transaction() == "depense":
+                        cat = t._categorie
+                        categories[cat] = (categories.get(cat, 0)
+                                           + abs(t._montant))
+                for cat, total in sorted(categories.items(),
+                                         key=lambda x: x[1],
+                                         reverse=True):
+                    budget = self.verifier_budget(cat, mois, annee)
+                    plafond = budget.plafond if budget else 0
+                    ecart = plafond - total
+                    writer.writerow([cat, total, plafond, ecart])
+
+            ecrire_journal("EXPORT", 
+                           f"Rapport {mois}/{annee} → {nom_fichier}")
+            return chemin
+        except Exception as e:
+            print(f"⚠ Erreur export rapport : {e}")
+            return None
+
     
 # Test
 if __name__ == "__main__":
