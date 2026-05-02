@@ -47,7 +47,7 @@ class FinTrackApp:
         
         #Gestionnaire financier
         self.g = GestionnaireFinancier()
-
+        
         #Charger le profil utilisateur
         config = lire_config()
         if config and config.get("nom"):
