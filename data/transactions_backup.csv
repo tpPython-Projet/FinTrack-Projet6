@@ -3,9 +3,14 @@ id,date,description,montant,categorie,type
 2,2026-05-01,Prime,150000.0,Revenu,revenu
 4,2026-05-01,Santé,-100000.0,Santé,depense
 5,2026-05-01,Sport,-50000.0,Loisirs,depense
-6,2026-05-01,LOYER,-150000.0,Logement,depense
 7,2026-05-01,job,50000.0,Revenu,revenu
 8,2026-05-01,COURS d'anglais,-80000.0,Éducation,depense
 9,2026-05-01,ZEM,-90000.0,Transport,depense
 10,2026-05-01,RIZ,-70000.0,Alimentation,depense
-11,2026-05-02,fytuji,-3000000.0,Autre,depense
+12,2026-05-02,fudji,-300000.0,Autre,depense
+13,2026-05-02,Assurance vie,3000000.0,Revenu,revenu
+14,2026-05-02,loyer,-280000.0,Logement,depense
+15,2026-05-02,salaire,400000.0,Revenu,revenu
+16,2026-06-03,Salaire,4000000.0,Revenu,revenu
+17,2026-06-03,voyage,-60000.0,Loisirs,depense
+19,2026-06-03,riz,-400000.0,Alimentation,depense

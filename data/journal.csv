@@ -101,3 +101,64 @@
 2026-05-02 08:04:43,DEMARRAGE,Application FinTrack démarrée
 2026-05-02 08:05:17,SUPPRESSION,Transaction #11 supprimée !
 2026-05-02 08:07:07,AJOUT,Transaction #12 : -3000000.0 FCFA - fudji
+2026-05-02 08:36:00,DEMARRAGE,Application FinTrack démarrée
+2026-05-02 08:37:00,AJOUT,Transaction #13 : 3000000.0 FCFA - Assurance vie
+2026-05-02 08:39:19,BUDGET,Budget Logement défini : 300000.0 FCFA
+2026-05-02 08:40:03,AJOUT,Transaction #14 : -280000.0 FCFA - loyer
+2026-05-02 08:42:15,AJOUT,Transaction #15 : 400000.0 FCFA - salaire
+2026-05-02 08:59:55,DEMARRAGE,Application FinTrack démarrée
+2026-05-02 09:01:21,AJOUT,Transaction #16 : -5000000.0 FCFA - Achat de parcelle à Calavi
+2026-05-02 09:02:30,SUPPRESSION,Transaction #16 supprimée !
+2026-05-02 09:39:14,DEMARRAGE,Application FinTrack démarrée
+2026-05-26 08:34:05,DEMARRAGE,Application FinTrack démarrée
+2026-05-26 08:34:28,DEMARRAGE,Application FinTrack démarrée
+2026-05-26 08:37:09,DEMARRAGE,Application FinTrack démarrée
+2026-05-26 09:01:40,AJOUT,Transaction #16 : -1000.0 FCFA - NOURRITURE
+2026-05-26 09:02:18,SUPPRESSION,Transaction #16 supprimée !
+2026-05-26 09:13:59,DEMARRAGE,Application FinTrack démarrée
+2026-05-26 09:18:27,AJOUT,Transaction #16 : -15145720100.0 FCFA - vodoun
+2026-05-28 07:18:22,DEMARRAGE,Application FinTrack démarrée
+2026-05-28 07:19:47,DEMARRAGE,Application FinTrack démarrée
+2026-05-28 07:35:59,DEMARRAGE,Application FinTrack démarrée
+2026-05-28 07:41:53,DEMARRAGE,Application FinTrack démarrée
+2026-05-29 10:35:33,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 10:01:50,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 10:13:04,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 10:15:47,SUPPRESSION,Transaction #16 supprimée !
+2026-06-03 10:17:01,SUPPRESSION,Transaction #6 supprimée !
+2026-06-03 10:17:25,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 10:18:28,MODIFICATION,Transactin #12 modifiée !
+2026-06-03 10:19:42,AJOUT,Transaction #16 : 4000000.0 FCFA - Salaire
+2026-06-03 10:20:25,AJOUT,Transaction #17 : -6000000.0 FCFA - voyage
+2026-06-03 10:37:06,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:04:16,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:04:33,PARAMETRES,Profil mis à jour : Bliss / FCFA
+2026-06-03 11:05:29,PARAMETRES,Thème changé : Bleu nuit
+2026-06-03 11:05:39,PARAMETRES,Thème changé : Vert forêt
+2026-06-03 11:05:48,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:06:03,PARAMETRES,Thème changé : Vert forêt
+2026-06-03 11:06:10,PARAMETRES,Thème changé : Vert forêt
+2026-06-03 11:06:21,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:06:43,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:24:16,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:25:32,PARAMETRES,Profil mis à jour : Bliss / FCFA
+2026-06-03 11:33:25,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:33:37,PARAMETRES,Thème changé : Vert forêt
+2026-06-03 11:33:42,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:34:08,PARAMETRES,Thème changé : Gris ardoise
+2026-06-03 11:34:13,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:34:31,PARAMETRES,Thème changé : Bleu nuit
+2026-06-03 11:34:36,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:35:04,PARAMETRES,Profil mis à jour : Fir Bli / FCFA
+2026-06-03 11:41:40,MODIFICATION,Transactin #17 modifiée !
+2026-06-03 11:42:45,AJOUT,Transaction #18 : -300000.0 FCFA - riz
+2026-06-03 11:43:36,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 11:45:12,SUPPRESSION,Transaction #18 supprimée !
+2026-06-03 11:45:29,AJOUT,Transaction #19 : -400000.0 FCFA - riz
+2026-06-03 11:46:12,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 13:37:20,DEMARRAGE,Application FinTrack démarrée
+2026-06-03 13:37:40,BUDGET,Budget Alimentation défini : 400000.0 FCFA
+2026-06-03 13:38:18,SUPPRESSION,Transaction #19 supprimée !
+2026-06-03 13:38:34,AJOUT,Transaction #20 : -500000.0 FCFA - riz
+2026-06-03 13:39:25,PARAMETRES,Thème changé : Vert forêt
+2026-06-03 13:39:30,DEMARRAGE,Application FinTrack démarrée

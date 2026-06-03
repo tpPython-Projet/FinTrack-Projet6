@@ -1,6 +1,6 @@
 """
 main.py
-Projet : FinTrack - Moniteur de Budget Persoonel
+Projet : FinTrack - Moniteur de Budget Personnel
 Bloc 4, 5 & 6 : Persistance, Qualité et Interface
 Description : Menu principal, point d'entrée de l'application FinTrack
 Auteurs : HOUSSOU Towanou Bliss Espérance / AMOUSSOU Firmin

@@ -44,7 +44,13 @@ MOTS_CLES = {
     ],
     "Éducation": [
         "cahier", "stylo", "livre", "ecole", "universite", "frais",
-        "scolarite", "formation", "cours", "iut", "parakou"
+        "scolarite", "formation", "cours", "iut", "up", "releve", "attestation", "formation"
+    ],
+    "Arts": ["peinture", "dessin", "flyer", "pierre", "artiste", "sculpture", 
+
+    ],
+    "Culture & Tourisme":[ "vodoun", "album", "voyage", "découverte", "aventure"
+
     ],
     "Autre": []
 }
@@ -53,7 +59,7 @@ class GestionnaireFinancier:
     """
     Moteur central de FinTrack.
     Gère les transactions, les budgets, la catégorisation automatique 
-    et les calsuls statistiques. Orchestre toutes les interactions entre
+    et les calculs statistiques. Orchestre toutes les interactions entre
     les données et les fonctionnalités de l'application(l'interface utilisateur).
     """
     def __init__(self):
@@ -152,7 +158,7 @@ class GestionnaireFinancier:
             for t in self._transactions:
                 if(t.type_transaction() == "depense" and
                         t._categorie == b._categorie and
-                        t._date[5:7] == b._mois and
+                        t._date[5:7] == b._mois.zfill(2) and
                         t._date[:4] == b._annee):
                     b._depenses += abs(t._montant)
 
@@ -176,7 +182,7 @@ class GestionnaireFinancier:
         Analyse la description d'une transaction et retourne
         automatiquement la catégorie correspondante.
         Si aucun mot-clé ne correspond, retourne "Autre".
-        Gère l cas àù la description est None ou vide.
+        Gère le cas où la description est None ou vide.
         """
         try:
             if not description:

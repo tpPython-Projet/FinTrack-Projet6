@@ -18,10 +18,30 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.gestionnaire import GestionnaireFinancier 
 from src.csv_manager import lire_config, sauvegarder_config
 
-# -- Couleurs et styles --- 
-COULEUR_FOND       = "#1E1E2E"
-COULEUR_SURFACE    = "#2A2A3E"
-COULEUR_ACCENT     = "#7C3AED"
+# -- Thèmes disponibles ---
+_THEMES_DISPO = {
+    "Violet foncé (défaut)": {"fond": "#1E1E2E", "surface": "#2A2A3E", "accent": "#7C3AED"},
+    "Bleu nuit":             {"fond": "#0F172A", "surface": "#1E293B", "accent": "#3B82F6"},
+    "Vert forêt":            {"fond": "#0D1F1A", "surface": "#163028", "accent": "#10B981"},
+    "Rouge rubis":           {"fond": "#1A0E0E", "surface": "#2D1515", "accent": "#EF4444"},
+    "Gris ardoise":          {"fond": "#1C1C1C", "surface": "#2D2D2D", "accent": "#6B7280"},
+}
+
+def _charger_theme():
+    try:
+        from src.csv_manager import lire_config
+        config = lire_config()
+        if config and config.get("theme"):
+            return _THEMES_DISPO.get(config["theme"],
+                   _THEMES_DISPO["Violet foncé (défaut)"])
+    except Exception:
+        pass
+    return _THEMES_DISPO["Violet foncé (défaut)"]
+
+_t = _charger_theme()
+COULEUR_FOND       = _t["fond"]
+COULEUR_SURFACE    = _t["surface"]
+COULEUR_ACCENT     = _t["accent"]
 COULEUR_VERT       = "#10B981"
 COULEUR_ROUGE      = "#EF4444"
 COULEUR_JAUNE      = "#F59E0B"
@@ -44,6 +64,14 @@ class FinTrackApp:
         self.root.geometry("900x650")
         self.root.configure(bg=COULEUR_FOND)
         self.root.resizable(True, True)
+
+        # Centrage de la fenêtre à l'écran
+        self.root.update_idletasks()
+        largeur = 900
+        hauteur = 650
+        x = (self.root.winfo_screenwidth() // 2) - (largeur // 2)
+        y = (self.root.winfo_screenheight() // 2) - (hauteur // 2)
+        self.root.geometry(f"{largeur}x{hauteur}+{x}+{y}")
         
         #Gestionnaire financier
         self.g = GestionnaireFinancier()
@@ -69,6 +97,39 @@ class FinTrackApp:
 
         #Rafraîchir l'affichage
         self.rafraichir()
+
+        # Bandeau alerte si budget dépassé
+        self._verifier_alertes_budgets()
+
+        # Rafraîchissement automatique toutes les 60 secondes
+        self.root.after(60000, self._rafraichir_auto)
+
+    def _verifier_alertes_budgets(self):
+        """Affiche un bandeau rouge si un budget est dépassé."""
+        budgets_depasses = [b for b in self.g.budgets if b.est_depasse()]
+        if budgets_depasses:
+            noms = ", ".join(b.categorie for b in budgets_depasses)
+            if not hasattr(self, "_bandeau_alerte"):
+                self._bandeau_alerte = tk.Label(
+                    self.root,
+                    text=f"⚠ BUDGET DÉPASSÉ : {noms}",
+                    bg=COULEUR_ROUGE,
+                    fg="white",
+                    font=("Arial", 10, "bold"),
+                    pady=4)
+                self._bandeau_alerte.pack(fill="x", before=self.notebook)
+            else:
+                self._bandeau_alerte.config(
+                    text=f"⚠ BUDGET DÉPASSÉ : {noms}")
+        elif hasattr(self, "_bandeau_alerte"):
+            self._bandeau_alerte.destroy()
+            del self._bandeau_alerte
+
+    def _rafraichir_auto(self):
+        """Rafraîchit l'interface automatiquement toutes les 60 secondes."""
+        self.rafraichir()
+        self._verifier_alertes_budgets()
+        self.root.after(60000, self._rafraichir_auto)
 
     def _configurer_style(self):
         """Configure le style vituel des widgets ttk."""
@@ -191,6 +252,11 @@ class FinTrackApp:
                         text="🔍 Recherche")
         self._construire_onglet_recherche()
 
+        # Onglet Paramètres
+        self.frame_parametres = ttk.Frame(self.notebook)
+        self.notebook.add(self.frame_parametres, text="⚙️ Paramètres")
+        self._construire_onglet_parametres()
+
     def _construire_onglet_transactions(self):
         """Construit l'onglet de gestion des transactions."""
         frame = self.frame_transactions
@@ -207,7 +273,6 @@ class FinTrackApp:
                     text="✏️ Modifier", 
                     command=self.modifier_transaction).pack(
                         side="left", padx=5)
-        
         ttk.Button(btn_frame,
                     text="🗑️  Supprimer", 
                     command=self.supprimer_transaction).pack(
@@ -247,8 +312,30 @@ class FinTrackApp:
 
         #Tags couleurs
         self.tree_transactions.tag_configure("revenu",foreground=COULEUR_VERT)
-
         self.tree_transactions.tag_configure("depense",foreground=COULEUR_ROUGE)
+        # Couleurs alternées (amélioration visuelle)
+        self.tree_transactions.tag_configure("pair",
+            background="#252535")
+        self.tree_transactions.tag_configure("impair",
+            background=COULEUR_SURFACE)
+
+        # Double-clic pour modifier rapidement
+        self.tree_transactions.bind(
+            "<Double-Button-1>", lambda e: self.modifier_transaction())
+
+        # Tri des colonnes au clic sur l'en-tête
+        for col in ("ID", "Date", "Description",
+                    "Catégorie", "Montant", "Type"):
+            self.tree_transactions.heading(
+                col, text=col,
+                command=lambda c=col: self._trier_colonne(
+                    self.tree_transactions, c))
+
+        # Raccourcis clavier
+        self.root.bind("<Control-n>",
+                       lambda e: self.ouvrir_ajout_transaction())
+        self.root.bind("<Delete>",
+                       lambda e: self.supprimer_transaction())
     
     def _construire_onglet_budgets(self):
         """Construit l'onglet de gestion des budgets."""
@@ -322,6 +409,11 @@ class FinTrackApp:
                   text="🎯 Budget vs Réel",
                    command=self.afficher_budget_vs_reel).pack(
                        side="left", padx=5)
+
+        ttk.Button(btn_frame,
+                  text="🏷️ Ajouter mot-clé",
+                   command=self.ouvrir_ajout_mot_cle).pack(
+                       side="left", padx=5)
           
         # Zone statistiques texte
         self.txt_stats = tk.Text(frame,
@@ -353,14 +445,36 @@ class FinTrackApp:
                                          bg=COULEUR_SURFACE,
                                          fg=COULEUR_TEXTE,
                                          font=POLICE_NORMAL,
-                                         width=30,
+                                         width=25,
                                          insertbackground="white")
         self.entry_recherche.pack(side="left", padx=5)
 
+        # Filtre par catégorie 
+        tk.Label(search_frame,
+                 text="📂 Catégorie :",
+                 bg=COULEUR_FOND,
+                 fg=COULEUR_TEXTE,
+                 font=POLICE_NORMAL).pack(side="left", padx=(10, 5))
+
+        CATEGORIES_FILTRE = ["Toutes", "Alimentation", "Transport",
+                             "Logement", "Santé", "Loisirs",
+                             "Éducation", "Revenu", "Autre",
+                             "Culture & Tourisme", "Arts"]
+        self.cat_filtre_var = tk.StringVar(value="Toutes")
+        self.combo_filtre_cat = ttk.Combobox(
+            search_frame,
+            textvariable=self.cat_filtre_var,
+            values=CATEGORIES_FILTRE,
+            state="readonly",
+            width=16)
+        self.combo_filtre_cat.pack(side="left", padx=5)
 
         ttk.Button(search_frame,
                     text="Rechercher",
                     command=self.rechercher).pack(side="left", padx=5)
+        ttk.Button(search_frame,
+                    text="🔄 Tout afficher",
+                    command=self._afficher_tout).pack(side="left", padx=5)
          # Filtre par période
         periode_frame = tk.Frame(frame, bg=COULEUR_FOND, pady=5)
         periode_frame.pack(fill="x", padx=10)
@@ -418,6 +532,396 @@ class FinTrackApp:
             "revenu", foreground=COULEUR_VERT)
         self.tree_recherche.tag_configure(
             "depense", foreground=COULEUR_ROUGE)
+        
+
+    def _construire_onglet_parametres(self):
+        """Construit l'onglet Paramètres."""
+        frame = self.frame_parametres
+
+        # Conteneur scrollable
+        canvas = tk.Canvas(frame, bg=COULEUR_FOND, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(frame, orient="vertical",
+                                  command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        inner = tk.Frame(canvas, bg=COULEUR_FOND)
+        win_id = canvas.create_window((0, 0), window=inner,
+                                      anchor="nw")
+
+        def _on_resize(event):
+            canvas.itemconfig(win_id, width=event.width)
+        canvas.bind("<Configure>", _on_resize)
+
+        def _on_inner_resize(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        inner.bind("<Configure>", _on_inner_resize)
+
+        # ── Titre général ──────────────────────────────────────────
+        tk.Label(inner,
+                 text="⚙️  Paramètres de l'application",
+                 font=("Arial", 15, "bold"),
+                 bg=COULEUR_FOND,
+                 fg=COULEUR_TEXTE).pack(anchor="w", padx=30, pady=(25, 5))
+
+        tk.Frame(inner, bg=COULEUR_ACCENT,
+                 height=2).pack(fill="x", padx=30, pady=(0, 20))
+
+        # ════════════════════════════════════════════════════════════
+        # SECTION 1 — Profil utilisateur
+        # ════════════════════════════════════════════════════════════
+        def section(parent, titre):
+            """Crée un bloc section avec titre et cadre."""
+            tk.Label(parent, text=titre,
+                     font=("Arial", 12, "bold"),
+                     bg=COULEUR_FOND,
+                     fg=COULEUR_ACCENT).pack(anchor="w",
+                                             padx=30, pady=(10, 6))
+            card = tk.Frame(parent, bg=COULEUR_SURFACE,
+                            padx=20, pady=18)
+            card.pack(fill="x", padx=30, pady=(0, 18))
+            return card
+
+        card_profil = section(inner, "👤  Profil utilisateur")
+
+        # Nom
+        row_nom = tk.Frame(card_profil, bg=COULEUR_SURFACE)
+        row_nom.pack(fill="x", pady=6)
+        tk.Label(row_nom, text="Nom affiché :",
+                 bg=COULEUR_SURFACE, fg=COULEUR_TEXTE_GRIS,
+                 font=POLICE_NORMAL, width=18,
+                 anchor="w").pack(side="left")
+        self._entry_nom = tk.Entry(row_nom,
+                                   bg=COULEUR_FOND,
+                                   fg=COULEUR_TEXTE,
+                                   font=POLICE_NORMAL,
+                                   insertbackground="white",
+                                   relief="flat", bd=4, width=28)
+        self._entry_nom.insert(0, self.nom_utilisateur)
+        self._entry_nom.pack(side="left", padx=(0, 12))
+
+        # Devise
+        row_devise = tk.Frame(card_profil, bg=COULEUR_SURFACE)
+        row_devise.pack(fill="x", pady=6)
+        tk.Label(row_devise, text="Devise :",
+                 bg=COULEUR_SURFACE, fg=COULEUR_TEXTE_GRIS,
+                 font=POLICE_NORMAL, width=18,
+                 anchor="w").pack(side="left")
+        DEVISES = ["FCFA", "EUR", "USD", "GBP", "XOF", "MAD"]
+        from src.csv_manager import lire_config
+        config_actuelle = lire_config()
+        devise_actuelle = (config_actuelle.get("devise", "FCFA")
+                           if config_actuelle else "FCFA")
+        self._devise_var = tk.StringVar(value=devise_actuelle)
+        combo_devise = ttk.Combobox(row_devise,
+                                    textvariable=self._devise_var,
+                                    values=DEVISES,
+                                    state="readonly", width=12)
+        combo_devise.pack(side="left", padx=(0, 12))
+
+        def sauvegarder_profil():
+            from src.csv_manager import sauvegarder_config, ecrire_journal
+            nouveau_nom = self._entry_nom.get().strip()
+            if not nouveau_nom:
+                messagebox.showerror("Erreur",
+                                     "Le nom ne peut pas être vide.")
+                return
+            self.nom_utilisateur = nouveau_nom
+            sauvegarder_config(nouveau_nom, self._devise_var.get())
+            ecrire_journal("PARAMETRES",
+                           f"Profil mis à jour : {nouveau_nom} / "
+                           f"{self._devise_var.get()}")
+            # Mettre à jour le header
+            for widget in self.root.winfo_children():
+                if isinstance(widget, tk.Frame):
+                    for child in widget.winfo_children():
+                        if (isinstance(child, tk.Label) and
+                                "👋" in str(child.cget("text"))):
+                            child.config(
+                                text=f"👋 {nouveau_nom}")
+            messagebox.showinfo("Succès",
+                                f"✓ Profil sauvegardé !\n"
+                                f"Nom : {nouveau_nom}\n"
+                                f"Devise : {self._devise_var.get()}")
+
+        ttk.Button(card_profil, text="💾  Sauvegarder le profil",
+                   command=sauvegarder_profil).pack(
+                       anchor="w", pady=(10, 0))
+
+        # ════════════════════════════════════════════════════════════
+        # SECTION 2 — Thème visuel
+        # ════════════════════════════════════════════════════════════
+        card_theme = section(inner, "🎨  Thème visuel")
+
+        THEMES = {
+            "Violet foncé (défaut)": {
+                "fond": "#1E1E2E", "surface": "#2A2A3E",
+                "accent": "#7C3AED"
+            },
+            "Bleu nuit":             {
+                "fond": "#0F172A", "surface": "#1E293B",
+                "accent": "#3B82F6"
+            },
+            "Vert forêt":            {
+                "fond": "#0D1F1A", "surface": "#163028",
+                "accent": "#10B981"
+            },
+            "Rouge rubis":           {
+                "fond": "#1A0E0E", "surface": "#2D1515",
+                "accent": "#EF4444"
+            },
+            "Gris ardoise":          {
+                "fond": "#1C1C1C", "surface": "#2D2D2D",
+                "accent": "#6B7280"
+            },
+        }
+
+        row_theme = tk.Frame(card_theme, bg=COULEUR_SURFACE)
+        row_theme.pack(fill="x", pady=6)
+        tk.Label(row_theme, text="Choisir un thème :",
+                 bg=COULEUR_SURFACE, fg=COULEUR_TEXTE_GRIS,
+                 font=POLICE_NORMAL, width=18,
+                 anchor="w").pack(side="left")
+        self._theme_var = tk.StringVar(
+            value="Violet foncé (défaut)")
+        combo_theme = ttk.Combobox(row_theme,
+                                   textvariable=self._theme_var,
+                                   values=list(THEMES.keys()),
+                                   state="readonly", width=22)
+        combo_theme.pack(side="left", padx=(0, 12))
+
+        # Aperçu couleur accent
+        self._apercu_accent = tk.Label(
+            row_theme, text="  ● Accent  ",
+            font=POLICE_NORMAL,
+            bg=COULEUR_ACCENT, fg="white",
+            relief="flat", padx=8)
+        self._apercu_accent.pack(side="left", padx=4)
+
+        def maj_apercu(event=None):
+            t = THEMES[self._theme_var.get()]
+            self._apercu_accent.config(bg=t["accent"])
+        combo_theme.bind("<<ComboboxSelected>>", maj_apercu)
+
+        def appliquer_theme():
+            from src.csv_manager import sauvegarder_config, ecrire_journal, lire_config
+            t = THEMES[self._theme_var.get()]
+            global COULEUR_FOND, COULEUR_SURFACE, COULEUR_ACCENT
+            COULEUR_FOND    = t["fond"]
+            COULEUR_SURFACE = t["surface"]
+            COULEUR_ACCENT  = t["accent"]
+        
+            # Sauvegarder le thème dans config.csv
+            config = lire_config()
+            nom = config.get("nom", self.nom_utilisateur) if config else self.nom_utilisateur
+            devise = config.get("devise", "FCFA") if config else "FCFA"
+            sauvegarder_config(nom, devise, self._theme_var.get())
+            ecrire_journal("PARAMETRES", f"Thème changé : {self._theme_var.get()}")
+            # Relancer l'application immédiatement
+            import subprocess, sys
+            messagebox.showinfo("Thème appliqué", f"✓ Thème '{self._theme_var.get()}' appliqué !")
+            self.root.destroy()
+            subprocess.Popen([sys.executable] + sys.argv)
+        ttk.Button(card_theme, text="🎨  Appliquer le thème",
+                command=appliquer_theme).pack(anchor="w", pady=(10, 0))
+
+
+
+        # ════════════════════════════════════════════════════════════
+        # SECTION 3 — Mots-clés par catégorie
+        # ════════════════════════════════════════════════════════════
+        card_mots = section(inner, "🏷️  Mots-clés de catégorisation")
+
+        row_cat = tk.Frame(card_mots, bg=COULEUR_SURFACE)
+        row_cat.pack(fill="x", pady=6)
+        tk.Label(row_cat, text="Catégorie :",
+                 bg=COULEUR_SURFACE, fg=COULEUR_TEXTE_GRIS,
+                 font=POLICE_NORMAL, width=18,
+                 anchor="w").pack(side="left")
+
+        CATEGORIES_MC = [
+            "Alimentation", "Transport", "Logement",
+            "Santé", "Loisirs", "Éducation",
+            "Arts", "Culture & Tourisme", "Autre"
+        ]
+        self._cat_mc_var = tk.StringVar(value="Alimentation")
+        combo_mc = ttk.Combobox(row_cat,
+                                textvariable=self._cat_mc_var,
+                                values=CATEGORIES_MC,
+                                state="readonly", width=20)
+        combo_mc.pack(side="left", padx=(0, 12))
+
+        # Affichage des mots-clés existants
+        self._txt_mots = tk.Text(card_mots,
+                                 bg=COULEUR_FOND,
+                                 fg=COULEUR_TEXTE,
+                                 font=POLICE_PETIT,
+                                 height=4, width=55,
+                                 relief="flat",
+                                 state="disabled",
+                                 wrap="word")
+        self._txt_mots.pack(fill="x", pady=(8, 6))
+
+        def afficher_mots(event=None):
+            cat = self._cat_mc_var.get()
+            mots = self.g._mots_cles.get(cat, [])
+            self._txt_mots.config(state="normal")
+            self._txt_mots.delete("1.0", "end")
+            if mots:
+                self._txt_mots.insert("end",
+                                      "  " + ",  ".join(mots))
+            else:
+                self._txt_mots.insert("end",
+                                      "  Aucun mot-clé défini.")
+            self._txt_mots.config(state="disabled")
+
+        combo_mc.bind("<<ComboboxSelected>>", afficher_mots)
+        afficher_mots()
+
+        # Ajouter un mot-clé
+        row_ajout = tk.Frame(card_mots, bg=COULEUR_SURFACE)
+        row_ajout.pack(fill="x", pady=4)
+        tk.Label(row_ajout, text="Ajouter un mot-clé :",
+                 bg=COULEUR_SURFACE, fg=COULEUR_TEXTE_GRIS,
+                 font=POLICE_NORMAL, width=18,
+                 anchor="w").pack(side="left")
+        self._entry_mc = tk.Entry(row_ajout,
+                                  bg=COULEUR_FOND,
+                                  fg=COULEUR_TEXTE,
+                                  font=POLICE_NORMAL,
+                                  insertbackground="white",
+                                  relief="flat", bd=4, width=20)
+        self._entry_mc.pack(side="left", padx=(0, 10))
+
+        def ajouter_mc():
+            mot = self._entry_mc.get().strip().lower()
+            cat = self._cat_mc_var.get()
+            if not mot:
+                messagebox.showerror(
+                    "Erreur", "Le mot-clé est vide.")
+                return
+            if self.g.ajouter_mot_cle(cat, mot):
+                self._entry_mc.delete(0, "end")
+                afficher_mots()
+                messagebox.showinfo(
+                    "Succès",
+                    f"✓ '{mot}' ajouté à {cat} !")
+            else:
+                messagebox.showerror(
+                    "Erreur", "Catégorie introuvable.")
+
+        ttk.Button(row_ajout, text="➕ Ajouter",
+                   command=ajouter_mc).pack(side="left")
+
+        # ════════════════════════════════════════════════════════════
+        # SECTION 4 — Informations système
+        # ════════════════════════════════════════════════════════════
+        card_sys = section(inner, "ℹ️  Informations système")
+
+        import platform
+        nb_trans = len(self.g.transactions)
+        nb_budgets = len(self.g.budgets)
+        solde = self.g.calculer_solde()
+
+        infos = [
+            ("Version Python",
+             platform.python_version()),
+            ("Système",
+             platform.system() + " " + platform.release()),
+            ("Transactions enregistrées",
+             str(nb_trans)),
+            ("Budgets définis",
+             str(nb_budgets)),
+            ("Solde actuel",
+             f"{solde:,.0f} {devise_actuelle}".replace(",", " ")),
+        ]
+
+        for label, valeur in infos:
+            row = tk.Frame(card_sys, bg=COULEUR_SURFACE)
+            row.pack(fill="x", pady=3)
+            tk.Label(row, text=label + " :",
+                     bg=COULEUR_SURFACE,
+                     fg=COULEUR_TEXTE_GRIS,
+                     font=POLICE_NORMAL,
+                     width=26, anchor="w").pack(side="left")
+            tk.Label(row, text=valeur,
+                     bg=COULEUR_SURFACE,
+                     fg=COULEUR_TEXTE,
+                     font=("Arial", 11, "bold")).pack(
+                         side="left")
+
+        # ════════════════════════════════════════════════════════════
+        # SECTION 5 — Zone danger : remettre à zéro
+        # ════════════════════════════════════════════════════════════
+        card_danger = section(inner, "🗑️  Zone critique")
+        tk.Label(card_danger,
+                 text="Supprime toutes les transactions "
+                      "de manière irréversible.",
+                 bg=COULEUR_SURFACE,
+                 fg=COULEUR_TEXTE_GRIS,
+                 font=POLICE_PETIT).pack(anchor="w", pady=(0, 8))
+
+        def reset_donnees():
+            confirmation = messagebox.askyesno(
+                "⚠ Confirmation requise",
+                "Voulez-vous vraiment supprimer TOUTES\n"
+                "les transactions ?\n\n"
+                "Cette action est IRRÉVERSIBLE.",
+                icon="warning")
+            if not confirmation:
+                return
+            from src.csv_manager import (sauvegarder_transactions,
+                                         ecrire_journal,
+                                         sauvegarder_backup)
+            sauvegarder_backup()
+            self.g._transactions.clear()
+            self.g._prochain_id = 1
+            sauvegarder_transactions(self.g.transactions)
+            ecrire_journal("RESET",
+                           "Toutes les transactions supprimées.")
+            self.rafraichir()
+            messagebox.showinfo(
+                "Réinitialisation",
+                "✓ Données effacées.\n"
+                "Un backup a été créé automatiquement.")
+
+        btn_danger = tk.Button(
+            card_danger,
+            text="🗑️  Supprimer toutes les transactions",
+            bg=COULEUR_ROUGE, fg="white",
+            font=("Arial", 10, "bold"),
+            relief="flat", padx=12, pady=6,
+            activebackground="#C0392B",
+            activeforeground="white",
+            cursor="hand2",
+            command=reset_donnees)
+        btn_danger.pack(anchor="w")
+
+        # Padding bas
+        tk.Frame(inner, bg=COULEUR_FOND,
+                 height=30).pack()
+        
+    def _trier_colonne(self, tree, colonne):
+        """Trie les lignes d'un Treeview par colonne (asc/desc)."""
+        donnees = [(tree.set(item, colonne), item)
+                   for item in tree.get_children("")]
+        # Détecter si déjà trié pour inverser
+        if not hasattr(self, "_tri_etat"):
+            self._tri_etat = {}
+        inverse = self._tri_etat.get(colonne, False)
+        donnees.sort(reverse=inverse)
+        for index, (_, item) in enumerate(donnees):
+            tree.move(item, "", index)
+        self._tri_etat[colonne] = not inverse
+        # Mettre à jour le titre avec flèche
+        for col in tree["columns"]:
+            fleche = " ↑" if (col == colonne and not inverse) else (
+                     " ↓" if (col == colonne and inverse) else "")
+            tree.heading(col, text=col + fleche,
+                         command=lambda c=col: self._trier_colonne(
+                             tree, c))
+
     def rafraichir(self):
         """Rafraîchit tous les affichages."""
         self._maj_dashboard()
@@ -445,16 +949,25 @@ class FinTrackApp:
         for item in self.tree_transactions.get_children():
             self.tree_transactions.delete(item)
 
-        for t in sorted(self.g.transactions,
-                        key=lambda x: x.date, reverse=True):
+        if not self.g.transactions:
+            self.tree_transactions.insert(
+                "", "end",
+                values=("—", "—",
+                        "Aucune transaction enregistrée.",
+                        "—", "—", "—"))
+            return
+
+        for i, t in enumerate(sorted(self.g.transactions,
+                        key=lambda x: x.date, reverse=True)):
             montant = f"{t.montant:,.0f} FCFA".replace(",", " ")
-            tag = t.type_transaction()
+            tag_type = t.type_transaction()
+            tag_ligne = "pair" if i % 2 == 0 else "impair"
             self.tree_transactions.insert(
                 "", "end",
                 values=(t.id, t.date, t.description,
                         t.categorie, montant,
                         t.type_transaction()),
-                tags=(tag,))
+                tags=(tag_type, tag_ligne))
 
     def _maj_budgets(self):
         """Met à jour le tableau des budgets."""
@@ -618,7 +1131,7 @@ class FinTrackApp:
                         row=4, column=0, sticky="w", pady=8)
         CATEGORIES = ["Alimentation","Transport","Logement",
                         "Santé", "Loisirs", "Éducation",
-                        "Revenu", "Autre"]
+                        "Revenu", "Autre", "Culture & Tourisme", "Arts"]
         cat_var = tk.StringVar(value="Autre")
         combo_cat = ttk.Combobox(form, textvariable=cat_var,
                                     values=CATEGORIES,
@@ -760,7 +1273,7 @@ class FinTrackApp:
                     row=3, column=0, sticky="w", pady=8)
         CATEGORIES = ["Alimentation", "Transport", "Logement",
                     "Santé", "Loisirs", "Éducation",
-                    "Revenu", "Autre"]
+                    "Revenu", "Autre", "Culture & Tourisme", "Arts"]
         cat_var = tk.StringVar(value=cat_actuelle)
         combo_cat = ttk.Combobox(form, textvariable=cat_var,
                                 values=CATEGORIES,
@@ -828,7 +1341,7 @@ class FinTrackApp:
                  font=POLICE_NORMAL).grid(
                      row=0, column=0, sticky="w", pady=8)
         CATEGORIES = ["Alimentation", "Transport", "Logement",
-                      "Santé", "Loisirs", "Éducation", "Autre"]
+                      "Santé", "Loisirs", "Éducation", "Culture & Tourisme", "Arts", "Autre"]
         cat_var = tk.StringVar(value="Alimentation")
         combo_cat = ttk.Combobox(form, textvariable=cat_var,
                                   values=CATEGORIES,
@@ -889,17 +1402,22 @@ class FinTrackApp:
                    command=valider).pack(pady=15)
 
     def rechercher(self):
-        """Recherche des transactions par mot-clé."""
+        """Recherche des transactions par mot-clé et/ou catégorie."""
         mot_cle = self.entry_recherche.get().strip()
-        if not mot_cle:
-            messagebox.showwarning("Attention",
-                                   "Entrez un mot-clé.")
-            return
+        cat_filtre = self.cat_filtre_var.get()
 
         for item in self.tree_recherche.get_children():
             self.tree_recherche.delete(item)
 
-        resultats = self.g.rechercher(mot_cle)
+        # Appliquer les filtres combinés (EF-11)
+        resultats = self.g.transactions
+        if mot_cle:
+            resultats = [t for t in resultats
+                         if mot_cle.lower() in t.description.lower()]
+        if cat_filtre != "Toutes":
+            resultats = [t for t in resultats
+                         if t.categorie == cat_filtre]
+
         for t in resultats:
             montant = f"{t.montant:,.0f} FCFA".replace(",", " ")
             tag = t.type_transaction()
@@ -912,7 +1430,23 @@ class FinTrackApp:
 
         if not resultats:
             messagebox.showinfo("Résultat",
-                                f"Aucun résultat pour '{mot_cle}'.")
+                                "Aucune transaction trouvée.")
+
+    def _afficher_tout(self):
+        """Réinitialise les filtres et affiche toutes les transactions."""
+        self.entry_recherche.delete(0, "end")
+        self.cat_filtre_var.set("Toutes")
+        for item in self.tree_recherche.get_children():
+            self.tree_recherche.delete(item)
+        for t in self.g.transactions:
+            montant = f"{t.montant:,.0f} FCFA".replace(",", " ")
+            tag = t.type_transaction()
+            self.tree_recherche.insert(
+                "", "end",
+                values=(t.id, t.date, t.description,
+                        t.categorie, montant,
+                        t.type_transaction()),
+                tags=(tag,))
 
     
     def afficher_camembert(self):
@@ -949,6 +1483,21 @@ class FinTrackApp:
         ax.set_title("Répartition des dépenses par catégorie",
                      color="white", fontsize=14, pad=20)
         plt.tight_layout()
+
+        # Sauvegarde PNG 
+        from tkinter import filedialog
+        if messagebox.askyesno("Sauvegarder",
+                               "Sauvegarder ce graphique en PNG ?"):
+            chemin = filedialog.asksaveasfilename(
+                defaultextension=".png",
+                filetypes=[("PNG", "*.png")],
+                initialfile="camembert_depenses.png")
+            if chemin:
+                plt.savefig(chemin, dpi=150,
+                            bbox_inches="tight",
+                            facecolor="#1E1E2E")
+                messagebox.showinfo("Sauvegardé",
+                                    f"✓ Image sauvegardée :\n{chemin}")
         plt.show()
 
     def afficher_histogramme(self):
@@ -1035,6 +1584,21 @@ class FinTrackApp:
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
         plt.tight_layout()
+
+        # Sauvegarde PNG (EF-13)
+        from tkinter import filedialog
+        if messagebox.askyesno("Sauvegarder",
+                               "Sauvegarder ce graphique en PNG ?"):
+            chemin = filedialog.asksaveasfilename(
+                defaultextension=".png",
+                filetypes=[("PNG", "*.png")],
+                initialfile="histogramme_mensuel.png")
+            if chemin:
+                plt.savefig(chemin, dpi=150,
+                            bbox_inches="tight",
+                            facecolor="#1E1E2E")
+                messagebox.showinfo("Sauvegardé",
+                                    f"✓ Image sauvegardée :\n{chemin}")
         plt.show()
 
     
@@ -1198,6 +1762,21 @@ class FinTrackApp:
             spine.set_color("#ffffff20")
 
         plt.tight_layout()
+
+        # Sauvegarde PNG 
+        from tkinter import filedialog
+        if messagebox.askyesno("Sauvegarder",
+                               "Sauvegarder ce graphique en PNG ?"):
+            chemin = filedialog.asksaveasfilename(
+                defaultextension=".png",
+                filetypes=[("PNG", "*.png")],
+                initialfile="evolution_solde.png")
+            if chemin:
+                plt.savefig(chemin, dpi=150,
+                            bbox_inches="tight",
+                            facecolor="#0F0F1A")
+                messagebox.showinfo("Sauvegardé",
+                                    f"✓ Image sauvegardée :\n{chemin}")
         plt.show()
 
 
@@ -1262,6 +1841,21 @@ class FinTrackApp:
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
         plt.tight_layout()
+
+        # Sauvegarde PNG 
+        from tkinter import filedialog
+        if messagebox.askyesno("Sauvegarder",
+                               "Sauvegarder ce graphique en PNG ?"):
+            chemin = filedialog.asksaveasfilename(
+                defaultextension=".png",
+                filetypes=[("PNG", "*.png")],
+                initialfile="budget_vs_reel.png")
+            if chemin:
+                plt.savefig(chemin, dpi=150,
+                            bbox_inches="tight",
+                            facecolor="#1E1E2E")
+                messagebox.showinfo("Sauvegardé",
+                                    f"✓ Image sauvegardée :\n{chemin}")
         plt.show()
 
     def filtrer_periode(self):
@@ -1291,20 +1885,113 @@ class FinTrackApp:
             messagebox.showinfo(
                 "Résultat",
                 f"Aucune transaction entre {date_debut} et {date_fin}." )
+    def ouvrir_ajout_mot_cle(self):
+        """Ouvre une fenêtre pour ajouter un mot-clé."""
+        fenetre = tk.Toplevel(self.root)
+        fenetre.title("Ajouter un mot-clé")
+        fenetre.geometry("400x260")
+        fenetre.configure(bg=COULEUR_FOND)
+        fenetre.grab_set()
+
+        tk.Label(fenetre,
+                 text="🏷️ AJOUTER UN MOT-CLÉ",
+                 font=POLICE_TITRE,
+                 bg=COULEUR_FOND,
+                 fg=COULEUR_TEXTE).pack(pady=15)
+
+        form = tk.Frame(fenetre, bg=COULEUR_FOND)
+        form.pack(padx=20, fill="x")
+
+        tk.Label(form, text="Catégorie :",
+                 bg=COULEUR_FOND, fg=COULEUR_TEXTE,
+                 font=POLICE_NORMAL).grid(
+                     row=0, column=0, sticky="w", pady=8)
+        CATEGORIES = ["Alimentation", "Transport", "Logement",
+                      "Santé", "Loisirs", "Éducation",
+                      "Culture & Tourisme", "Arts", "Autre"]
+        cat_var = tk.StringVar(value="Alimentation")
+        combo_cat = ttk.Combobox(form, textvariable=cat_var,
+                                  values=CATEGORIES,
+                                  state="readonly", width=25)
+        combo_cat.grid(row=0, column=1, sticky="ew", pady=8)
+
+        tk.Label(form, text="Nouveau mot-clé :",
+                 bg=COULEUR_FOND, fg=COULEUR_TEXTE,
+                 font=POLICE_NORMAL).grid(
+                     row=1, column=0, sticky="w", pady=8)
+        entry_mot = tk.Entry(form, bg=COULEUR_SURFACE,
+                              fg=COULEUR_TEXTE,
+                              font=POLICE_NORMAL, width=27,
+                              insertbackground="white")
+        entry_mot.grid(row=1, column=1, sticky="ew", pady=8)
+
+        def valider():
+            mot = entry_mot.get().strip().lower()
+            if not mot:
+                messagebox.showerror("Erreur",
+                                     "Le mot-clé ne peut pas être vide.")
+                return
+            if self.g.ajouter_mot_cle(cat_var.get(), mot):
+                fenetre.destroy()
+                messagebox.showinfo(
+                    "Succès",
+                    f"✓ Mot-clé '{mot}' ajouté à {cat_var.get()} !")
+            else:
+                messagebox.showerror("Erreur", "Catégorie introuvable.")
+
+        ttk.Button(fenetre, text="✓ Valider",
+                   command=valider).pack(pady=15)
+
     def exporter_rapport(self):
-        """Exporte le rapport mensuel en CSV."""
-        mois = Date.today().strftime("%m")
-        annee = Date.today().strftime("%Y")
-        chemin = self.g.exporter_rapport_mensuel(mois, annee)
-        if chemin:
-            messagebox.showinfo(
-                "Exporter réussi",
-                f"✓ Rapport exporté :\n{chemin}")
-        else:
-            messagebox.showerror(
-                "Erreur",
-                "Impossible d'exporter le rapport."
-            )
+        """Exporte le rapport mensuel en CSV avec choix du mois."""
+        fenetre = tk.Toplevel(self.root)
+        fenetre.title("Exporter le rapport")
+        fenetre.geometry("360x220")
+        fenetre.configure(bg=COULEUR_FOND)
+        fenetre.grab_set()
+
+        tk.Label(fenetre, text="📥 EXPORTER LE RAPPORT",
+                 font=POLICE_TITRE, bg=COULEUR_FOND,
+                 fg=COULEUR_TEXTE).pack(pady=15)
+
+        form = tk.Frame(fenetre, bg=COULEUR_FOND)
+        form.pack(padx=20, fill="x")
+
+        tk.Label(form, text="Mois (MM) :",
+                 bg=COULEUR_FOND, fg=COULEUR_TEXTE,
+                 font=POLICE_NORMAL).grid(
+                     row=0, column=0, sticky="w", pady=8)
+        entry_mois = tk.Entry(form, bg=COULEUR_SURFACE,
+                               fg=COULEUR_TEXTE, font=POLICE_NORMAL,
+                               width=10, insertbackground="white")
+        entry_mois.insert(0, Date.today().strftime("%m"))
+        entry_mois.grid(row=0, column=1, sticky="w", pady=8)
+
+        tk.Label(form, text="Année (YYYY) :",
+                 bg=COULEUR_FOND, fg=COULEUR_TEXTE,
+                 font=POLICE_NORMAL).grid(
+                     row=1, column=0, sticky="w", pady=8)
+        entry_annee = tk.Entry(form, bg=COULEUR_SURFACE,
+                                fg=COULEUR_TEXTE, font=POLICE_NORMAL,
+                                width=10, insertbackground="white")
+        entry_annee.insert(0, Date.today().strftime("%Y"))
+        entry_annee.grid(row=1, column=1, sticky="w", pady=8)
+
+        def valider():
+            mois = entry_mois.get().strip()
+            annee = entry_annee.get().strip()
+            chemin = self.g.exporter_rapport_mensuel(mois, annee)
+            fenetre.destroy()
+            if chemin:
+                messagebox.showinfo(
+                    "Export réussi",
+                    f"✓ Rapport exporté :\n{chemin}")
+            else:
+                messagebox.showerror(
+                    "Erreur", "Impossible d'exporter le rapport.")
+
+        ttk.Button(fenetre, text="✓ Exporter",
+                   command=valider).pack(pady=12)
            
 # =================================================================================================
 # Point d'entrée
@@ -1312,7 +1999,40 @@ class FinTrackApp:
 def main():
     """Lance l'interface graphique FinTrack."""
     root = tk.Tk()
-    app = FinTrackApp(root)
+    root.withdraw() 
+
+    # Splash screen
+    splash = tk.Toplevel()
+    splash.title("")
+    splash.geometry("420x220")
+    splash.configure(bg=COULEUR_FOND)
+    splash.overrideredirect(True)  # Supprime les bordures
+
+    # Centrer le splash
+    splash.update_idletasks()
+    x = (splash.winfo_screenwidth() // 2) - 210
+    y = (splash.winfo_screenheight() // 2) - 110
+    splash.geometry(f"420x220+{x}+{y}")
+
+    tk.Label(splash, text="💰", font=("Arial", 48),
+             bg=COULEUR_FOND, fg=COULEUR_ACCENT).pack(pady=(30, 5))
+    tk.Label(splash, text="FinTrack",
+             font=("Arial", 22, "bold"),
+             bg=COULEUR_FOND, fg=COULEUR_TEXTE).pack()
+    tk.Label(splash, text="Moniteur de Budget Personnel",
+             font=("Arial", 11),
+             bg=COULEUR_FOND, fg=COULEUR_TEXTE_GRIS).pack()
+    tk.Label(splash, text="Chargement...",
+             font=("Arial", 9),
+             bg=COULEUR_FOND, fg=COULEUR_TEXTE_GRIS).pack(pady=(15, 0))
+
+    # Fermer le splash après 2 secondes et afficher l'app
+    def lancer_app():
+        splash.destroy()
+        root.deiconify()
+        FinTrackApp(root)
+
+    root.after(2000, lancer_app)
     root.mainloop()
 
 

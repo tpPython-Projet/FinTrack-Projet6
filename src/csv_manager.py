@@ -160,20 +160,18 @@ def lire_config(chemin=CONFIG_CSV):
         print(f"Erreur lecture config : {e}")
         return None
 
-def sauvegarder_config(nom,devise="FCFA", chemin=CONFIG_CSV):
+def sauvegarder_config(nom, devise="FCFA", theme="Violet foncé (défaut)", chemin=CONFIG_CSV):
+    entetes=["nom", "devise", "theme"]
     """
     Sauvegarde le profil utilisteur dans cette config.csv.
     """
-
-    entetes=["nom", "devise"]
     try:
         with open(chemin, "w", newline="", encoding="utf-8") as f:
             writer =csv.DictWriter(f,fieldnames=entetes)
             writer.writeheader()
-            writer.writerow({"nom": nom, "devise":devise})
-    except Exception as e : 
-        print (f"Erreur sauvegarde confgig:{e} ")
-
+            writer.writerow({"nom": nom, "devise": devise, "theme": theme})
+    except Exception as e:
+        print(f"Erreur sauvegarde config:{e}")
 
 def sauvegarder_backup(chemin=TRANSACTIONS_CSV):
     """Crée une copie de secours avant toute modification."""
